@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Tap to Play!</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap');
+
+    body,
+    html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 99%, #FECFEF 100%);
+      font-family: 'Fredoka One', cursive;
+      touch-action: none;
+      /* Prevent default touch actions like scrolling */
+    }
+
+    #game-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+
+    #score-board {
+      position: absolute;
+      top: 10%;
+      font-size: 3rem;
+      color: #fff;
+      text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.2);
+      pointer-events: none;
+      z-index: 10;
+      transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    #dummy-element {
+      width: 100px;
+      height: 100px;
+      background-color: #fff;
+      border-radius: 50%;
+      position: absolute;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 2rem;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 0.1s;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    #dummy-element::after {
+      content: 'TAP!';
+      color: #FF6B6B;
+    }
+
+    .particle {
+      position: absolute;
+      pointer-events: none;
+      background: #fff;
+      border-radius: 50%;
+      animation: pop 0.6s ease-out forwards;
+    }
+
+    #cta-button {
+      position: absolute;
+      bottom: 10%;
+      padding: 15px 40px;
+      background-color: #4ECDC4;
+      color: white;
+      border: none;
+      border-radius: 50px;
+      font-size: 1.5rem;
+      font-family: 'Fredoka One', cursive;
+      box-shadow: 0 5px 0 #2CB5AC;
+      cursor: pointer;
+      transform: scale(0);
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 20;
+      text-decoration: none;
+    }
+
+    #cta-button:active {
+      transform: scale(0.95) translateY(5px);
+      box-shadow: 0 0 0 #2CB5AC;
+    }
+
+    #cta-button.visible {
+      transform: scale(1);
+    }
+
+    @keyframes float {
+      0% {
+        transform: translateY(0px);
+      }
+
+      50% {
+        transform: translateY(-20px);
+      }
+
+      100% {
+        transform: translateY(0px);
+      }
+    }
+
+    @keyframes pop {
+      0% {
+        transform: scale(1);
+        opacity: 1;
+      }
+
+      100% {
+        transform: scale(3);
+        opacity: 0;
+      }
+    }
+
+    /* Mobile adjustments */
+    @media (max-width: 600px) {
+      #dummy-element {
+        width: 80px;
+        height: 80px;
+        font-size: 1.5rem;
+      }
+
+      #score-board {
+        font-size: 2.5rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="game-container">
+    <div id="score-board">0</div>
+    <div id="dummy-element"></div>
+    <a href="#" id="cta-button">INSTALL NOW</a>
+  </div>
+
+  <script>
+    const dummy = document.getElementById('dummy-element');
+    const scoreBoard = document.getElementById('score-board');
+    const ctaButton = document.getElementById('cta-button');
+    const container = document.getElementById('game-container');
+
+    let score = 0;
+    let clicks = 0;
+    const maxClicks = 5; // Show CTA after 5 clicks
+
+    // Random colors for the dummy element
+    const colors = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#FF9A9E', '#C7F464'];
+
+    function moveDummy() {
+      const containerRect = container.getBoundingClientRect();
+      const dummyRect = dummy.getBoundingClientRect();
+
+      // Calculate safe area (keep it somewhat centered but moving)
+      const maxX = containerRect.width - dummyRect.width;
+      const maxY = containerRect.height - dummyRect.height;
+
+      const randomX = Math.random() * (maxX * 0.8) + (maxX * 0.1); // Keep within 10-90% width
+      const randomY = Math.random() * (maxY * 0.6) + (maxY * 0.2); // Keep within 20-80% height
+
+      dummy.style.left = `${randomX}px`;
+      dummy.style.top = `${randomY}px`;
+
+      // Reset animation to sync with new position if needed, 
+      // but here we just let the float animation continue or we could reset it.
+      // For a "jump" feel, we could add a class.
+    }
+
+    function createParticles(x, y) {
+      for (let i = 0; i < 5; i++) {
+        const particle = document.createElement('div');
+        particle.classList.add('particle');
+        particle.style.left = `${x}px`;
+        particle.style.top = `${y}px`;
+
+        const size = Math.random() * 10 + 5;
+        particle.style.width = `${size}px`;
+        particle.style.height = `${size}px`;
+
+        // Random direction
+        const tx = (Math.random() - 0.5) * 100;
+        const ty = (Math.random() - 0.5) * 100;
+
+        particle.animate([
+          { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+          { transform: `translate(${tx}px, ${ty}px) scale(0)`, opacity: 0 }
+        ], {
+          duration: 600,
+          easing: 'ease-out'
+        }).onfinish = () => particle.remove();
+
+        container.appendChild(particle);
+      }
+    }
+
+    function handleInteraction(e) {
+      e.preventDefault(); // Prevent double firing on some touch devices
+
+      score++;
+      clicks++;
+      scoreBoard.innerText = score;
+
+      // Visual feedback on score
+      scoreBoard.style.transform = 'scale(1.5)';
+      setTimeout(() => scoreBoard.style.transform = 'scale(1)', 100);
+
+      // Change color
+      const randomColor = colors[Math.floor(Math.random() * colors.length)];
+      dummy.style.backgroundColor = randomColor;
+
+      // Particles
+      // Get click/touch position or element center
+      let clientX, clientY;
+      if (e.type === 'touchstart') {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+      } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+      }
+      createParticles(clientX, clientY);
+
+      // Move the element
+      moveDummy();
+
+      // Show CTA logic
+      if (clicks >= maxClicks) {
+        ctaButton.classList.add('visible');
+      }
+    }
+
+    // Initialize position
+    // We need to wait for layout to know container size, but CSS centering handles initial state.
+    // Let's just set it to absolute after first interaction or immediately random.
+    // Actually, let's start it in center (CSS default) then move it.
+
+    dummy.addEventListener('mousedown', handleInteraction);
+    dummy.addEventListener('touchstart', handleInteraction);
+
+    // Prevent default touch behaviors on the dummy to stop scrolling/zooming
+    dummy.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Peel Reveal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { overscroll-behavior-y: none; }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            overscroll-behavior-y: none;
+            background: #000;
+            font-family: 'Montserrat', sans-serif;
+            -webkit-touch-callout: none;
+        }
+
+        #peel {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            cursor: grab;
+            touch-action: none;
+            user-select: none;
+            overflow: hidden;
+            overscroll-behavior-y: none;
+        }
+
+        #peel:active { cursor: grabbing; }
+
+        .layer {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .layer img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            pointer-events: none;
+        }
+
+        /* ── Bottom reveal image ── */
+        #bottom { z-index: 1; }
+
+        #bottom::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 50% 50%,
+                rgba(26,122,74,0.4) 0%,
+                rgba(0,180,80,0.12) 45%,
+                transparent 70%
+            );
+            z-index: 2;
+            opacity: 0;
+            transition: opacity 0.6s ease;
+            pointer-events: none;
+        }
+
+        #bottom.glowing::before { opacity: 1; }
+
+        /* ── Front image ── */
+        #front-wrapper {
+            z-index: 3;
+            clip-path: inset(0 0 0 0);
+        }
+
+        #front-wrapper::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, transparent 8%);
+            pointer-events: none;
+            z-index: 4;
+        }
+
+        /* ── Fold strip ── */
+        #fold {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 0;
+            z-index: 5;
+            overflow: hidden;
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        #fold img {
+            position: absolute;
+            width: 100%;
+            bottom: 0;
+            left: 0;
+            height: 100vh;
+            height: 100dvh;
+            object-fit: cover;
+            object-position: top;
+            transform: scaleY(-1);
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        #fold::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0) 100%);
+            pointer-events: none;
+        }
+
+        /* ── Shadow at peel line ── */
+        #shadow {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 40px;
+            z-index: 4;
+            pointer-events: none;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.28), transparent);
+            opacity: 0;
+        }
+
+        /* ══════════════════════════════════
+           LOGO — top CENTER
+        ══════════════════════════════════ */
+        #logo {
+            position: absolute;
+            top: 2%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 25;
+            pointer-events: none;
+            width: clamp(100px, 45vw, 200px);
+            filter: drop-shadow(0 2px 10px rgba(0,0,0,0.6));
+        }
+
+        #logo img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* ══════════════════════════════════
+           TEXT OVERLAYS
+        ══════════════════════════════════ */
+        .text-overlay {
+            position: absolute;
+            left: 0;
+            right: 0;
+            width: 100%;
+            pointer-events: none;
+            z-index: 6;
+            padding: 0;
+            text-align: center;
+        }
+
+        /* All top & bottom headlines — font-size directly in vw, fills screen */
+        .text-line {
+            display: block;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 900;
+            line-height: 1.0;
+            text-transform: uppercase;
+            white-space: nowrap;
+            width: 100%;
+            font-size: 7.5vw;   /* ← THE UNSEEN DANGER/HYGIENE */
+        }
+
+        .text-line.bottom-line {
+            font-size: 9vw;     /* ← HYGIENE MATTERS — shorter text = bigger */
+        }
+
+        /* ── FRONT layer top (dark germ) ── */
+        #front-text-top {
+            top: calc(2% + clamp(100px, 32vw, 200px) + 4px);
+        }
+        #front-text-top .text-line {
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
+            color: #ffffff;
+        }
+        #front-text-top .text-line .accent { color: #e8212b; } /* RED — DANGER */
+
+        /* ── FRONT layer bottom ── */
+        #front-text-bottom { bottom: 3%; }
+        #front-text-bottom .text-line {
+            text-shadow: 2px 2px 12px rgba(0,0,0,0.8);
+        }
+        #front-text-bottom .text-line .white  { color: #ffffff; }
+        #front-text-bottom .text-line .accent { color: #7fff00; }
+
+        /* ── BOTTOM layer top (clean hands) ── */
+        #bottom-text-top {
+            top: calc(2% + clamp(100px, 32vw, 200px) + 4px);
+            z-index: 2;
+        }
+        #bottom-text-top .text-line {
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.55);
+            color: #ffffff;
+        }
+
+        /* HYGIENE — starts red, turns green on reveal via JS */
+        #bottom-text-top .text-line .accent {
+            color: #e8212b;
+            transition: color 0.8s ease;
+        }
+        #bottom-text-top .text-line .accent.green {
+            color: #4ade80;
+        }
+
+        /* ── BOTTOM layer bottom ── */
+        #bottom-text-bottom {
+            bottom: 3%;
+            z-index: 2;
+        }
+        #bottom-text-bottom .text-line {
+            text-shadow: 2px 2px 12px rgba(0,0,0,0.25);
+        }
+        #bottom-text-bottom .text-line .white  { color: #ffffff; }
+        #bottom-text-bottom .text-line .accent { color: #1a7a4a; }
+
+        /* HYGIENE in HYGIENE MATTERS — white before reveal, black after */
+        #hm-hygiene-word {
+            color: #ffffff;
+            transition: color 0.8s ease;
+        }
+        #hm-hygiene-word.black { color: #000000; }
+
+        /* ══════════════════════════════════
+           DEMO HINT
+        ══════════════════════════════════ */
+        #demo-hint {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            height: 38%;
+            z-index: 20;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            padding-bottom: 12px;
+            transition: opacity 0.3s ease;
+        }
+
+        .chevrons {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            margin-bottom: 10px;
+        }
+
+        .chev {
+            width: 28px;
+            height: 28px;
+            border-right: 3px solid rgba(255,255,255,0.9);
+            border-bottom: 3px solid rgba(255,255,255,0.9);
+            transform: rotate(45deg);
+            border-radius: 2px;
+        }
+
+        .chev:nth-child(1) { animation: chevPulse 1.4s ease-in-out 0s infinite; }
+        .chev:nth-child(2) { animation: chevPulse 1.4s ease-in-out 0.18s infinite; }
+        .chev:nth-child(3) { animation: chevPulse 1.4s ease-in-out 0.36s infinite; }
+
+        @keyframes chevPulse {
+            0%, 100% { opacity: 0.15; }
+            50%       { opacity: 1; }
+        }
+
+        .finger-wrap {
+            position: relative;
+            width: 44px;
+            height: 64px;
+        }
+
+        .finger {
+            width: 32px;
+            height: 44px;
+            background: rgba(255,255,255,0.92);
+            border-radius: 16px 16px 12px 12px;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            top: 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            animation: fingerSwipe 2s ease-in-out infinite;
+        }
+
+        .finger::after {
+            content: '';
+            position: absolute;
+            bottom: 6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.25);
+        }
+
+        @keyframes fingerSwipe {
+            0%   { top: 0px;  opacity: 0; }
+            15%  { top: 0px;  opacity: 1; }
+            70%  { top: 28px; opacity: 1; }
+            85%  { top: 28px; opacity: 0; }
+            100% { top: 0px;  opacity: 0; }
+        }
+
+        .hint-label {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            animation: labelFade 2s ease-in-out infinite;
+        }
+
+        .hint-label-bold {
+            color: #ffffff;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 900;
+            font-size: clamp(0.7rem, 3.2vw, 1rem);
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            text-shadow: 0 2px 12px rgba(0,0,0,0.9);
+        }
+
+        .hint-label-light {
+            color: rgba(255,255,255,0.72);
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 300;
+            font-size: clamp(0.58rem, 2.4vw, 0.82rem);
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.7);
+        }
+
+        @keyframes labelFade {
+            0%, 100% { opacity: 0.5; }
+            50%       { opacity: 1; }
+        }
+
+        /* ══════════════════════════════════
+           TREASURE REVEAL OVERLAY
+        ══════════════════════════════════ */
+        #treasure-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 15;
+            pointer-events: none;
+            opacity: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            transition: opacity 0.5s ease;
+        }
+
+        #treasure-overlay::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 50% 50%,
+                rgba(26,122,74,0.35) 0%,
+                rgba(0,180,80,0.10) 50%,
+                transparent 70%
+            );
+        }
+
+        .treasure-badge {
+            position: relative;
+            width: clamp(160px, 55vw, 280px);
+            height: clamp(160px, 55vw, 280px);
+            border-radius: 50%;
+            overflow: visible;
+            transform: scale(0);
+            transition: transform 0s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .treasure-badge-inner {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            overflow: hidden;
+            position: relative;
+            z-index: 1;
+            box-shadow:
+                0 0 0 4px rgba(26,122,74,0.8),
+                0 0 50px rgba(26,200,100,0.7),
+                0 8px 40px rgba(0,0,0,0.5);
+        }
+
+        .treasure-badge-inner img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .treasure-badge-ring {
+            position: absolute;
+            inset: -6px;
+            border-radius: 50%;
+            background: conic-gradient(
+                #1a7a4a 0deg,
+                #4ade80 90deg,
+                #1a7a4a 180deg,
+                #4ade80 270deg,
+                #1a7a4a 360deg
+            );
+            z-index: 0;
+            animation: spinRing 3s linear infinite;
+        }
+
+        .treasure-badge.pop {
+            animation: badgePop 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.15s forwards,
+                       badgePulse 1.8s ease-in-out 1s infinite;
+        }
+
+        @keyframes badgePop {
+            0%   { transform: scale(0) rotate(-8deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+
+        @keyframes badgePulse {
+            0%, 100% { filter: drop-shadow(0 0 10px rgba(26,200,100,0.6)); }
+            50%       { filter: drop-shadow(0 0 30px rgba(26,200,100,1.0)); }
+        }
+
+        @keyframes spinRing {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
+        }
+
+        .treasure-sub {
+            color: rgba(255,255,255,0.95);
+            font-size: clamp(0.75rem, 3vw, 1.1rem);
+            font-weight: 600;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            text-shadow: 0 2px 12px rgba(0,0,0,0.8), 0 0 20px rgba(26,200,100,0.5);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease 0.5s, transform 0.5s ease 0.5s;
+        }
+
+        .treasure-sub.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        #particles {
+            position: absolute;
+            inset: 0;
+            z-index: 14;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+<div id="peel">
+
+    <!-- ══ BOTTOM layer: clean hands — revealed after peel ══ -->
+    <div class="layer" id="bottom">
+        <img src="https://i.postimg.cc/rpxgxPyT/front.jpg" alt="Reveal" />
+
+        <div class="text-overlay" id="bottom-text-top">
+            <span class="text-line">THE UNSEEN <span class="accent" id="hygiene-word">HYGIENE</span></span>
+        </div>
+
+        <div class="text-overlay" id="bottom-text-bottom">
+            <span class="text-line bottom-line"><span id="hm-hygiene-word">HYGIENE</span> <span class="accent">MATTERS</span></span>
+        </div>
+    </div>
+
+    <canvas id="particles"></canvas>
+
+    <div id="treasure-overlay">
+        <div class="treasure-badge">
+            <div class="treasure-badge-ring"></div>
+            <div class="treasure-badge-inner">
+                <a href="https://www.dettol.pk/" target="_blank" style="display:block;width:100%;height:100%;">
+                <img src="https://i.postimg.cc/mrCVC5ZL/reveal.png" style="width:100%;height:100%;object-fit:cover;display:block;"
+                     onerror="this.parentElement.parentElement.style.background='linear-gradient(135deg,#1a7a4a,#4ade80)'" />
+                </a>
+            </div>
+        </div>
+        <div class="treasure-sub">Stay Protected with Dettol</div>
+    </div>
+
+    <div id="fold">
+        <img src="https://i.postimg.cc/R0KGKDSy/bottom.jpg" alt="" />
+    </div>
+
+    <div id="shadow"></div>
+
+    <!-- ══ FRONT layer: dark germ hands — peels away ══ -->
+    <div class="layer" id="front-wrapper">
+        <img src="https://i.postimg.cc/R0KGKDSy/bottom.jpg" alt="Front" />
+
+        <div class="text-overlay" id="front-text-top">
+            <span class="text-line">THE UNSEEN <span class="accent">DANGER</span></span>
+        </div>
+
+        <div class="text-overlay" id="front-text-bottom">
+            <span class="text-line bottom-line"><span class="white">HYGIENE</span> <span class="accent">MATTERS</span></span>
+        </div>
+    </div>
+
+    <!-- ══ LOGO — top CENTER ══ -->
+    <div id="logo">
+        <img src="https://i.postimg.cc/MGVtVFZ2/logo.png" alt="Logo"
+             onerror="this.style.display='none'" />
+    </div>
+
+    <div id="demo-hint">
+        <div class="chevrons">
+            <div class="chev"></div>
+            <div class="chev"></div>
+            <div class="chev"></div>
+        </div>
+        <div class="finger-wrap">
+            <div class="finger"></div>
+        </div>
+        <div class="hint-label">
+            <span class="hint-label-bold">Germs Are Everywhere</span>
+            <span class="hint-label-light">Swipe Down To Remove Them</span>
+        </div>
+    </div>
+
+</div>
+
+<script>
+(function () {
+
+    /* ══════════════════════════
+       FIT TEXT — fills full width
+       Same logic for ALL .fit-text elements
+    ══════════════════════════ */
+    function fitTextElements() {
+        const els = document.querySelectorAll('.fit-text');
+
+        els.forEach(el => {
+            /* data-width-scale: per-element override, default 0.94 */
+            const scale = parseFloat(el.dataset.widthScale || '0.94');
+            const availableWidth = window.innerWidth * scale;
+
+            el.style.fontSize = '10px';
+            let lo = 10, hi = 400;
+            while (hi - lo > 0.5) {
+                const mid = (lo + hi) / 2;
+                el.style.fontSize = mid + 'px';
+                if (el.scrollWidth <= availableWidth) {
+                    lo = mid;
+                } else {
+                    hi = mid;
+                }
+            }
+            el.style.fontSize = lo + 'px';
+        });
+    }
+
+    if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(fitTextElements);
+    } else {
+        setTimeout(fitTextElements, 300);
+    }
+    window.addEventListener('resize', fitTextElements);
+
+    /* ══════════════════════════
+       TWEEN ENGINE
+    ══════════════════════════ */
+    function ease_power2_out(t) { return 1 - (1 - t) * (1 - t); }
+    function ease_power1_inout(t) { return t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2,2)/2; }
+
+    const tweens = [];
+
+    function tweenMulti(targets, duration, easeFn, onUpdate, onDone) {
+        const froms = targets.map(t => t.obj[t.key]);
+        const start = performance.now();
+        tweens.push({ multi: true, targets, froms, duration: duration * 1000, start, easeFn, onUpdate, onDone, done: false });
+    }
+
+    function tickTweens(now) {
+        for (let i = tweens.length - 1; i >= 0; i--) {
+            const tw = tweens[i];
+            if (tw.done) { tweens.splice(i, 1); continue; }
+            const elapsed = now - tw.start;
+            const t = Math.min(elapsed / tw.duration, 1);
+            const e = tw.easeFn(t);
+            if (tw.multi) {
+                tw.targets.forEach((target, idx) => {
+                    target.obj[target.key] = tw.froms[idx] + (target.to - tw.froms[idx]) * e;
+                });
+                if (tw.onUpdate) tw.onUpdate();
+            }
+            if (t >= 1) {
+                tw.done = true;
+                if (tw.onDone) tw.onDone();
+            }
+        }
+    }
+
+    let particles = [];
+
+    function loop(now) {
+        tickTweens(now);
+        drawParticles();
+        requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+
+    const peel       = document.getElementById('peel');
+    const frontWrap  = document.getElementById('front-wrapper');
+    const fold       = document.getElementById('fold');
+    const shadow     = document.getElementById('shadow');
+    const hint       = document.getElementById('demo-hint');
+    const bottom     = document.getElementById('bottom');
+    const overlay    = document.getElementById('treasure-overlay');
+    const badge      = overlay.querySelector('.treasure-badge');
+    const sub        = overlay.querySelector('.treasure-sub');
+    const canvas     = document.getElementById('particles');
+    const ctx        = canvas.getContext('2d');
+    const hygieneWord   = document.getElementById('hygiene-word');
+    const hmHygieneWord = document.getElementById('hm-hygiene-word');
+
+    const FOLD_H = 30;
+    let isDragging      = false;
+    let startY          = 0;
+    let currentProgress = 0;
+    let revealed        = false;
+
+    function resizeCanvas() {
+        canvas.width  = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    function applyProgress(p) {
+        currentProgress = Math.max(0, Math.min(p, 1));
+        const y = currentProgress * window.innerHeight;
+        frontWrap.style.clipPath = `inset(${y}px 0 0 0)`;
+        fold.style.height  = FOLD_H + 'px';
+        fold.style.top     = Math.max(0, y - FOLD_H) + 'px';
+        fold.style.opacity = currentProgress > 0.01 ? '1' : '0';
+        shadow.style.top     = y + 'px';
+        shadow.style.opacity = (currentProgress > 0.01 && currentProgress < 0.99) ? '1' : '0';
+        hint.style.opacity = currentProgress > 0.05 ? '0' : '1';
+    }
+
+    applyProgress(0);
+
+    function spawnParticles() {
+        particles = [];
+        const cx = window.innerWidth / 2;
+        const cy = window.innerHeight / 2;
+        const colors = ['#4ade80','#1a7a4a','#86efac','#ffffff','#bbf7d0','#00ff87','#34d399'];
+        for (let i = 0; i < 120; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 3 + Math.random() * 10;
+            particles.push({
+                x: cx, y: cy,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed - Math.random() * 4,
+                size: 3 + Math.random() * 8,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                alpha: 1,
+                decay: 0.012 + Math.random() * 0.018,
+                shape: Math.random() > 0.4 ? 'rect' : 'circle',
+                rot: Math.random() * Math.PI * 2,
+                rotV: (Math.random() - 0.5) * 0.2
+            });
+        }
+    }
+
+    function drawParticles() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (const p of particles) {
+            if (p.alpha <= 0) continue;
+            p.x  += p.vx;
+            p.y  += p.vy;
+            p.vy += 0.25;
+            p.vx *= 0.98;
+            p.rot += p.rotV;
+            p.alpha -= p.decay;
+            ctx.save();
+            ctx.globalAlpha = Math.max(0, p.alpha);
+            ctx.fillStyle   = p.color;
+            ctx.translate(p.x, p.y);
+            ctx.rotate(p.rot);
+            if (p.shape === 'rect') {
+                ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+            } else {
+                ctx.beginPath();
+                ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+    }
+
+    function triggerReveal() {
+        if (revealed) return;
+        revealed = true;
+        bottom.classList.add('glowing');
+        spawnParticles();
+        overlay.style.opacity = '1';
+        badge.classList.add('pop');
+        setTimeout(() => sub.classList.add('show'), 20);
+
+        /* ── HYGIENE color: red → green with 0.4s delay ── */
+        setTimeout(() => {
+            hygieneWord.classList.add('green');
+            hmHygieneWord.classList.add('black');
+        }, 400);
+    }
+
+    function startDrag(y) {
+        for (const tw of tweens) tw.done = true;
+        isDragging = true;
+        startY     = y - currentProgress * window.innerHeight;
+    }
+
+    function moveDrag(y) {
+        if (!isDragging) return;
+        applyProgress((y - startY) / window.innerHeight);
+    }
+
+    function endDrag() {
+        if (!isDragging) return;
+        isDragging = false;
+        const target = currentProgress > 0.4 ? 1 : 0;
+        const prog   = { v: currentProgress };
+        tweenMulti(
+            [{ obj: prog, key: 'v', to: target }],
+            0.45,
+            ease_power2_out,
+            () => applyProgress(prog.v),
+            () => {
+                if (target === 1) {
+                    frontWrap.style.display  = 'none';
+                    fold.style.display       = 'none';
+                    shadow.style.display     = 'none';
+                    peel.style.cursor        = 'default';
+                    overlay.style.pointerEvents = 'auto';
+                    triggerReveal();
+                }
+            }
+        );
+    }
+
+    peel.addEventListener('mousedown',   e => startDrag(e.clientY));
+    window.addEventListener('mousemove', e => moveDrag(e.clientY));
+    window.addEventListener('mouseup',   endDrag);
+
+    document.addEventListener('touchstart', e => e.preventDefault(), { passive: false });
+    document.addEventListener('touchmove',  e => e.preventDefault(), { passive: false });
+
+    peel.addEventListener('touchstart',  e => startDrag(e.touches[0].clientY), { passive: false });
+    window.addEventListener('touchmove', e => moveDrag(e.touches[0].clientY),  { passive: false });
+    window.addEventListener('touchend',  endDrag);
+
+    window.addEventListener('resize', () => applyProgress(currentProgress));
+
+    const demoObj = { v: 0 };
+    setTimeout(() => {
+        tweenMulti(
+            [{ obj: demoObj, key: 'v', to: 0.28 }],
+            1.0,
+            ease_power1_inout,
+            () => applyProgress(demoObj.v),
+            () => {
+                setTimeout(() => {
+                    tweenMulti(
+                        [{ obj: demoObj, key: 'v', to: 0 }],
+                        0.7,
+                        ease_power2_out,
+                        () => applyProgress(demoObj.v),
+                        null
+                    );
+                }, 300);
+            }
+        );
+    }, 1200);
+
+})();
+</script>
+</body>
+</html>

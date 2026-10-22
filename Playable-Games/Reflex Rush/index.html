@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Mountain Dew – Reflex Rush</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Anton&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --green: #9DFF00;
+    --egreen: #B7FF00;
+    --dgreen: #00B140;
+    --black: #050505;
+    --white: #FFFFFF;
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--black);
+    overflow: hidden;
+    font-family: 'Bebas Neue', sans-serif;
+    touch-action: none;
+  }
+
+  #app {
+    width: 100%; height: 100%;
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* ===== SHARED SCREEN WRAPPER ===== */
+  .screen {
+    position: absolute;
+    inset: 0;
+    display: flex; flex-direction: column; align-items: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.4s ease;
+    overflow: hidden;
+  }
+  .screen.active { opacity: 1; pointer-events: all; }
+
+  /* ===== ANIMATED BG ===== */
+  .bg-layer {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 40%, #003a00 0%, #050505 70%);
+    z-index: 0;
+  }
+  .grid-overlay {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(157,255,0,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(157,255,0,0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+    z-index: 1;
+    animation: gridPulse 3s ease-in-out infinite;
+  }
+  @keyframes gridPulse {
+    0%,100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+
+  /* ===== LOGO ===== */
+  .dew-logo {
+    position: relative; z-index: 10;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(36px, 10vw, 60px);
+    letter-spacing: -1px;
+    line-height: 1;
+    text-align: center;
+    margin-top: 28px;
+  }
+  .dew-logo .mtn { color: var(--white); display: block; font-size: 0.55em; letter-spacing: 8px; }
+  .dew-logo .dew-text {
+    color: var(--green);
+    text-shadow: 0 0 20px var(--green), 0 0 40px var(--egreen);
+    display: block; font-size: 1.4em; letter-spacing: -2px;
+  }
+
+  /* ===== PARTICLE CANVAS ===== */
+  #particleCanvas {
+    position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  }
+
+  /* ========================================
+     SCREEN 1 – START
+  ======================================== */
+  #s1 { justify-content: space-between; }
+  #s1 .hero-title {
+    position: relative; z-index: 10;
+    text-align: center;
+    margin-top: 12px;
+  }
+  #s1 .hero-title .reflex {
+    display: block;
+    font-size: clamp(56px, 16vw, 90px);
+    color: var(--white);
+    letter-spacing: 2px;
+    text-shadow: 0 0 30px rgba(255,255,255,0.3);
+  }
+  #s1 .hero-title .rush {
+    display: block;
+    font-family: 'Anton', sans-serif;
+    font-size: clamp(72px, 20vw, 120px);
+    color: var(--green);
+    letter-spacing: -2px;
+    line-height: 0.85;
+    text-shadow: 0 0 40px var(--green), 0 0 80px rgba(157,255,0,0.5);
+    animation: rushPulse 1.5s ease-in-out infinite;
+  }
+  @keyframes rushPulse {
+    0%,100% { text-shadow: 0 0 40px var(--green), 0 0 80px rgba(157,255,0,0.5); }
+    50% { text-shadow: 0 0 60px var(--egreen), 0 0 120px rgba(183,255,0,0.7), 0 0 200px rgba(157,255,0,0.3); }
+  }
+  #s1 .instruct-box {
+    position: relative; z-index: 10;
+    background: rgba(0,0,0,0.7);
+    border: 1.5px solid var(--green);
+    clip-path: polygon(12px 0%, 100% 0%, calc(100% - 12px) 100%, 0% 100%);
+    padding: 18px 28px 12px;
+    text-align: center;
+    max-width: 320px;
+    box-shadow: 0 0 20px rgba(157,255,0,0.2), inset 0 0 20px rgba(157,255,0,0.05);
+  }
+  #s1 .instruct-box p {
+    color: var(--white);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.5;
+    letter-spacing: 0.5px;
+  }
+  #s1 .instruct-box p span { color: var(--green); }
+  #s1 .bottom-area {
+    position: relative; z-index: 10;
+    width: 100%; padding: 0 32px 50px;
+    display: flex; flex-direction: column; align-items: center; gap: 16px;
+  }
+  .btn-start {
+    width: 100%; max-width: 320px;
+    padding: 18px;
+    background: var(--green);
+    border: none; outline: none;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 4px;
+    color: var(--black);
+    cursor: pointer;
+    clip-path: polygon(16px 0%, 100% 0%, calc(100% - 16px) 100%, 0% 100%);
+    animation: btnPulse 1.8s ease-in-out infinite;
+    transition: transform 0.1s;
+  }
+  .btn-start:active { transform: scale(0.97); }
+  @keyframes btnPulse {
+    0%,100% { box-shadow: 0 0 20px var(--green); }
+    50% { box-shadow: 0 0 40px var(--egreen), 0 0 80px rgba(157,255,0,0.4); }
+  }
+
+  /* Floating cans */
+  .float-can {
+    position: absolute; z-index: 5;
+    font-size: 40px;
+    animation: floatCan linear infinite;
+    pointer-events: none;
+    filter: drop-shadow(0 0 10px var(--green));
+  }
+  @keyframes floatCan {
+    0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 0.7; }
+    50% { opacity: 1; }
+    100% { transform: translateY(-30px) rotate(15deg) scale(1.1); opacity: 0.7; }
+  }
+
+  /* ========================================
+     SCREEN 2 – GAMEPLAY
+  ======================================== */
+  #s2 { justify-content: flex-start; }
+  .hud {
+    position: relative; z-index: 20;
+    width: 100%; padding: 20px 16px 10px;
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 8px;
+  }
+  .hud-box {
+    flex: 1;
+    background: rgba(0,0,0,0.8);
+    border: 1.5px solid var(--green);
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+    text-align: center;
+    padding: 6px 8px;
+    box-shadow: 0 0 10px rgba(157,255,0,0.2);
+  }
+  .hud-label {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.6);
+    display: block;
+  }
+  .hud-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    color: var(--green);
+    text-shadow: 0 0 15px var(--green);
+    display: block;
+    line-height: 1;
+  }
+  #comboValue.mega { color: var(--egreen); animation: comboFlash 0.3s ease; }
+  @keyframes comboFlash {
+    0% { transform: scale(1.5); }
+    100% { transform: scale(1); }
+  }
+
+  .combo-bar {
+    position: relative; z-index: 20;
+    width: 180px; margin: 0 auto;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid var(--dgreen);
+    height: 22px;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .combo-bar-text {
+    position: absolute;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--green);
+    z-index: 2;
+  }
+
+  #gameArea {
+    position: absolute; inset: 0; z-index: 10;
+    cursor: crosshair;
+  }
+
+  /* Game objects */
+  .game-obj {
+    position: absolute;
+    transform: translate(-50%, -50%) scale(0);
+    cursor: pointer;
+    transition: none;
+    pointer-events: all;
+    user-select: none;
+    z-index: 15;
+  }
+  .obj-inner img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+  }
+  .game-obj .obj-inner {
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(157,255,0,0.2) 0%, transparent 70%);
+    border: 2px solid rgba(157,255,0,0.6);
+    position: relative;
+    animation: objPulse 0.5s ease-in-out infinite alternate;
+  }
+  @keyframes objPulse {
+    0% { box-shadow: 0 0 10px var(--green), inset 0 0 10px rgba(157,255,0,0.2); }
+    100% { box-shadow: 0 0 25px var(--egreen), inset 0 0 20px rgba(157,255,0,0.4); }
+  }
+  .game-obj .crosshair {
+    position: absolute; inset: -8px;
+    border: 1px solid rgba(157,255,0,0.4);
+    border-radius: 50%;
+    animation: crosshairSpin 2s linear infinite;
+  }
+  @keyframes crosshairSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  /* Floating score popup */
+  .score-popup {
+    position: absolute;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    color: var(--egreen);
+    text-shadow: 0 0 10px var(--green);
+    pointer-events: none;
+    z-index: 30;
+    animation: floatUp 0.8s ease-out forwards;
+  }
+  @keyframes floatUp {
+    0% { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-60px) scale(1.3); }
+  }
+  .reaction-text {
+    position: absolute;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    font-weight: bold;
+    pointer-events: none;
+    z-index: 31;
+    animation: reactionAnim 0.7s ease-out forwards;
+  }
+  @keyframes reactionAnim {
+    0% { opacity: 1; transform: scale(0.5) skewX(-5deg); }
+    30% { opacity: 1; transform: scale(1.2) skewX(-5deg); }
+    100% { opacity: 0; transform: scale(1) translateY(-40px) skewX(-5deg); }
+  }
+
+  /* Explosion burst */
+  .burst {
+    position: absolute;
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 25;
+    transform: translate(-50%, -50%);
+    animation: burstAnim 0.4s ease-out forwards;
+  }
+  @keyframes burstAnim {
+    0% { width: 10px; height: 10px; opacity: 1; box-shadow: 0 0 0 0 rgba(157,255,0,0.9); }
+    100% { width: 100px; height: 100px; opacity: 0; box-shadow: 0 0 40px 40px rgba(157,255,0,0); }
+  }
+
+  /* ========================================
+     SCREEN 3 – ANALYZING
+  ======================================== */
+  #s3 { justify-content: flex-start; }
+  .analyze-title {
+    position: relative; z-index: 10;
+    margin-top: 12px;
+    text-align: center;
+  }
+  .analyze-title h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(28px, 8vw, 48px);
+    color: var(--green);
+    letter-spacing: 3px;
+    text-shadow: 0 0 20px var(--green);
+    animation: textFlicker 0.1s ease-in-out infinite alternate;
+  }
+  @keyframes textFlicker {
+    0% { opacity: 1; } 100% { opacity: 0.9; }
+  }
+  .analyze-title p {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 13px;
+    color: rgba(255,255,255,0.7);
+    letter-spacing: 1px;
+  }
+
+  .scanner-wrap {
+    position: relative; z-index: 10;
+    margin-top: 30px;
+    width: 260px; height: 260px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .scanner-ring {
+    position: absolute; inset: 0;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    border-top-color: var(--green);
+    border-right-color: rgba(157,255,0,0.3);
+    box-shadow: 0 0 20px var(--green), inset 0 0 20px rgba(157,255,0,0.1);
+    animation: scanRing 1s linear infinite;
+  }
+  .scanner-ring-2 {
+    position: absolute; inset: 16px;
+    border-radius: 50%;
+    border: 1px solid rgba(157,255,0,0.3);
+    animation: scanRing 1.5s linear infinite reverse;
+  }
+  .scanner-ring-3 {
+    position: absolute; inset: 30px;
+    border-radius: 50%;
+    border: 1px solid rgba(157,255,0,0.15);
+    border-top-color: var(--dgreen);
+  }
+  @keyframes scanRing {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  .scanner-face {
+    position: relative;
+    width: 160px; height: 160px;
+    background: radial-gradient(circle, rgba(0,177,64,0.15) 0%, rgba(0,0,0,0.8) 70%);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+  .face-emoji { font-size: 64px; }
+  .scan-line {
+    position: absolute;
+    width: 100%; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--green), transparent);
+    animation: scanLine 1.5s ease-in-out infinite;
+    top: 0;
+  }
+  @keyframes scanLine {
+    0% { top: 0; opacity: 0.8; }
+    100% { top: 100%; opacity: 0.2; }
+  }
+  .grid-face {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(157,255,0,0.1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(157,255,0,0.1) 1px, transparent 1px);
+    background-size: 16px 16px;
+    border-radius: 50%;
+    overflow: hidden;
+  }
+
+  .score-display-box {
+    position: relative; z-index: 10;
+    margin-top: 20px;
+    background: rgba(0,0,0,0.8);
+    border: 2px solid var(--green);
+    clip-path: polygon(16px 0%, 100% 0%, calc(100% - 16px) 100%, 0% 100%);
+    padding: 12px 40px;
+    text-align: center;
+    box-shadow: 0 0 20px rgba(157,255,0,0.3);
+  }
+  .score-display-box .slabel {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,0.6);
+    display: block;
+  }
+  .score-display-box .sval {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 52px;
+    color: var(--green);
+    text-shadow: 0 0 20px var(--green);
+    display: block;
+    line-height: 1;
+  }
+  .score-display-box .best {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 2px;
+  }
+
+  .progress-wrap {
+    position: relative; z-index: 10;
+    margin-top: 18px;
+    width: 280px;
+  }
+  .prog-bar-bg {
+    width: 100%; height: 28px;
+    background: rgba(0,0,0,0.7);
+    border: 1px solid var(--dgreen);
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+    overflow: hidden;
+    position: relative;
+  }
+  .prog-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--dgreen), var(--green), var(--egreen));
+    box-shadow: 0 0 15px var(--green);
+    transition: width 2s ease;
+    width: 0%;
+    position: relative;
+    overflow: hidden;
+  }
+  .prog-bar-fill::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(90deg, transparent 0, transparent 8px, rgba(255,255,255,0.1) 8px, rgba(255,255,255,0.1) 10px);
+    animation: progShine 0.5s linear infinite;
+  }
+  @keyframes progShine {
+    from { transform: translateX(0); }
+    to { transform: translateX(10px); }
+  }
+  .prog-pct {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+    color: var(--white);
+    text-shadow: 0 0 8px rgba(0,0,0,0.8);
+    z-index: 2;
+  }
+
+  .powering-text {
+    position: relative; z-index: 10;
+    margin-top: 16px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    letter-spacing: 4px;
+    color: var(--green);
+    animation: blink 0.8s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  /* ========================================
+     SCREEN 4 – RESULTS
+  ======================================== */
+  #s4 {
+    justify-content: flex-start;
+    padding-bottom: 34px;
+  }
+  .results-header {
+    position: relative; z-index: 10;
+    margin-top: 10px;
+    text-align: center;
+  }
+  .trophy-icon { font-size: 60px; display: block; animation: trophyBounce 1s ease-in-out infinite alternate; }
+  @keyframes trophyBounce {
+    from { transform: translateY(0) rotate(-5deg); }
+    to { transform: translateY(-8px) rotate(5deg); }
+  }
+
+  .result-title-text {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(36px, 10vw, 60px);
+    color: var(--green);
+    text-shadow: 0 0 30px var(--green);
+    letter-spacing: 3px;
+    display: block;
+    line-height: 1;
+  }
+
+  .results-card {
+    position: relative; z-index: 10;
+    margin-top: 20px;
+    margin-bottom: 52px;
+    background: rgba(0,0,0,0.8);
+    border: 2px solid var(--green);
+    width: 300px;
+    clip-path: polygon(20px 0%, 100% 0%, calc(100% - 20px) 100%, 0% 100%);
+    padding: 24px 32px;
+    box-shadow: 0 0 30px rgba(157,255,0,0.2), inset 0 0 20px rgba(157,255,0,0.05);
+  }
+  .results-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(157,255,0,0.15);
+  }
+  .results-row:last-child { border-bottom: none; }
+  .res-label {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.5);
+  }
+  .res-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    color: var(--green);
+    text-shadow: 0 0 10px var(--green);
+  }
+
+  .btn-cta {
+    position: relative; z-index: 10;
+    margin-top: auto;
+    padding: 18px 48px;
+    background: var(--green);
+    border: none; outline: none;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    letter-spacing: 4px;
+    color: var(--black);
+    cursor: pointer;
+    clip-path: polygon(16px 0%, 100% 0%, calc(100% - 16px) 100%, 0% 100%);
+    animation: btnPulse 1.8s ease-in-out infinite;
+  }
+  .btn-cta:active { transform: scale(0.97); }
+
+  .btn-replay {
+    position: relative; z-index: 10;
+    margin-top: 12px;
+    background: transparent;
+    border: 1.5px solid var(--green);
+    color: var(--green);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 3px;
+    padding: 10px 32px;
+    cursor: pointer;
+    clip-path: polygon(10px 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%);
+  }
+  .btn-replay:active { transform: scale(0.97); }
+
+  /* Corner decorations */
+  .corner {
+    position: absolute; z-index: 5;
+    width: 40px; height: 40px;
+    pointer-events: none;
+  }
+  .corner-tl { top: 8px; left: 8px; border-top: 2px solid var(--green); border-left: 2px solid var(--green); }
+  .corner-tr { top: 8px; right: 8px; border-top: 2px solid var(--green); border-right: 2px solid var(--green); }
+  .corner-bl { bottom: 8px; left: 8px; border-bottom: 2px solid var(--green); border-left: 2px solid var(--green); }
+  .corner-br { bottom: 8px; right: 8px; border-bottom: 2px solid var(--green); border-right: 2px solid var(--green); }
+
+  /* Lightning effect on screen edge */
+  .edge-glow {
+    position: absolute; z-index: 3; pointer-events: none;
+    left: 0; right: 0;
+    height: 150px;
+  }
+  .edge-glow.top {
+    top: 0;
+    background: linear-gradient(180deg, rgba(157,255,0,0.12) 0%, transparent 100%);
+  }
+  .edge-glow.bottom {
+    bottom: 0;
+    background: linear-gradient(0deg, rgba(157,255,0,0.12) 0%, transparent 100%);
+  }
+
+  /* ===== TIME WARNING ===== */
+  .time-warning { animation: timeWarn 0.3s ease-in-out infinite alternate; }
+  @keyframes timeWarn {
+    from { color: var(--green); text-shadow: 0 0 15px var(--green); }
+    to { color: #ff4444; text-shadow: 0 0 20px #ff4444; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="particleCanvas"></canvas>
+
+  <!-- SCREEN 1 – START -->
+  <div id="s1" class="screen active">
+    <div class="bg-layer"></div>
+    <div class="grid-overlay"></div>
+    <div class="edge-glow top"></div>
+    <div class="edge-glow bottom"></div>
+    <div class="corner corner-tl"></div>
+    <div class="corner corner-tr"></div>
+    <div class="corner corner-bl"></div>
+    <div class="corner corner-br"></div>
+
+    <div class="dew-logo">
+        <img src="https://i.postimg.cc/Pqz2zWRY/Logo.png" style="height:60px;object-fit:contain;" />
+    </div>
+
+    <div class="hero-title">
+      <span class="reflex">REFLEX</span>
+      <span class="rush">RUSH</span>
+    </div>
+
+    <!-- Floating decorative cans -->
+    <div class="float-can" style="top:38%;left:6%;animation-duration:2.2s;animation-delay:0s">  
+        <img src="https://i.postimg.cc/W46X6GHm/Can.png" style="width:40px;">
+    </div>
+    <div class="float-can" style="top:59%;left:12%;animation-duration:2.8s;animation-delay:0.5s;font-size:32px">  
+        <img src="https://i.postimg.cc/TPqCqV4W/lightning.png" style="width:30px;">
+    </div>
+    <div class="float-can" style="top:65%;right:5%;animation-duration:3.1s;animation-delay:1s;font-size:28px">  
+        <img src="https://i.postimg.cc/W46X6GHm/Can.png" style="width:40px;">
+    </div>
+    <div class="float-can" style="top:43%;right:12%;animation-duration:2.5s;animation-delay:0.8s;font-size:36px">  
+        <img src="https://i.postimg.cc/TPqCqV4W/lightning.png" style="width:30px;">
+    </div>
+
+    <div class="instruct-box">
+      <p><span>Tap Start</span> and destroy<br>incoming Dew objects<br>before they hit you.</p>
+    </div>
+
+    <div class="bottom-area">
+      <button class="btn-start" onclick="startGame()">START</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 2 – GAMEPLAY -->
+  <div id="s2" class="screen">
+    <div class="bg-layer"></div>
+    <div class="grid-overlay"></div>
+    <div class="edge-glow top"></div>
+    <div class="corner corner-tl"></div>
+    <div class="corner corner-tr"></div>
+
+    <div class="dew-logo" style="margin-top:16px">
+      <span class="mtn">MTN</span>
+      <span class="dew-text" style="font-size:1em">DEW</span>
+    </div>
+
+    <div class="hud">
+      <div class="hud-box">
+        <span class="hud-label">TIME</span>
+        <span class="hud-value" id="timeValue">0:15</span>
+      </div>
+      <div class="hud-box" style="flex:1.5">
+        <span class="hud-label">SCORE</span>
+        <span class="hud-value" id="scoreValue">0</span>
+      </div>
+      <div class="hud-box">
+        <span class="hud-label">COMBO</span>
+        <span class="hud-value" id="comboValue">x1</span>
+      </div>
+    </div>
+
+    <div class="combo-bar">
+      <span class="combo-bar-text" id="comboBarText">READY</span>
+    </div>
+
+    <div id="gameArea"></div>
+  </div>
+
+  <!-- SCREEN 3 – ANALYZING -->
+  <div id="s3" class="screen">
+    <div class="bg-layer"></div>
+    <div class="grid-overlay"></div>
+    <div class="edge-glow top"></div>
+    <div class="edge-glow bottom"></div>
+    <div class="corner corner-tl"></div>
+    <div class="corner corner-tr"></div>
+    <div class="corner corner-bl"></div>
+    <div class="corner corner-br"></div>
+
+    <div class="dew-logo">
+      <span class="mtn">MTN</span>
+      <span class="dew-text">DEW</span>
+    </div>
+
+    <div class="analyze-title">
+      <h2>ANALYZING REFLEXES...</h2>
+      <p>Calculating reaction speed.</p>
+    </div>
+
+    <div class="scanner-wrap">
+      <div class="scanner-ring"></div>
+      <div class="scanner-ring-2"></div>
+      <div class="scanner-ring-3"></div>
+      <div class="scanner-face">
+        <div class="grid-face"></div>
+        <span class="face-emoji">⚡</span>
+        <div class="scan-line"></div>
+      </div>
+    </div>
+
+    <div class="score-display-box">
+      <span class="slabel">SCORE</span>
+      <span class="sval" id="s3ScoreVal">0</span>
+      <span class="best" id="s3BestVal">BEST: 0</span>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="prog-bar-bg">
+        <div class="prog-bar-fill" id="progFill"></div>
+        <span class="prog-pct" id="progPct">0%</span>
+      </div>
+    </div>
+
+    <div class="powering-text">POWERING ANALYSIS...</div>
+  </div>
+
+  <!-- SCREEN 4 – RESULTS -->
+  <div id="s4" class="screen">
+    <div class="bg-layer"></div>
+    <div class="grid-overlay"></div>
+    <div class="edge-glow top"></div>
+    <div class="edge-glow bottom"></div>
+    <div class="corner corner-tl"></div>
+    <div class="corner corner-tr"></div>
+    <div class="corner corner-bl"></div>
+    <div class="corner corner-br"></div>
+
+    <div class="results-header">
+      <div class="dew-logo" style="margin-top:16px">
+        <span class="mtn">MTN</span>
+        <span class="dew-text">DEW</span>
+      </div>
+      <span class="trophy-icon">🏆</span>
+      <span class="result-title-text" id="resultTitle">REFLEX GOD</span>
+    </div>
+
+    <div class="results-card">
+      <div class="results-row">
+        <span class="res-label">REACTION SPEED</span>
+        <span class="res-val" id="resultSpeed">98%</span>
+      </div>
+      <div class="results-row">
+        <span class="res-label">FINAL SCORE</span>
+        <span class="res-val" id="resultScore">0</span>
+      </div>
+      <div class="results-row">
+        <span class="res-label">OBJECTS DESTROYED</span>
+        <span class="res-val" id="resultDestroyed">0</span>
+      </div>
+    </div>
+
+    <button class="btn-cta" onclick="window.open('#', '_blank')">UNLEASH THE RUSH</button>
+    <button class="btn-replay" onclick="replayGame()">↺ PLAY AGAIN</button>
+  </div>
+</div>
+
+<script>
+// ======== GAME STATE ========
+let score = 0;
+let bestScore = 0;
+let combo = 1;
+let comboCount = 0;
+let destroyed = 0;
+let timeLeft = 15;
+let gameTimer = null;
+let spawnTimer = null;
+let activeObjects = [];
+let gameRunning = false;
+
+const COMBO_NAMES = ['READY', 'RUSH!', 'FEVER!', 'FRENZY!', 'INSANE!', 'GOD MODE!'];
+const REACTION_TEXTS = ['PERFECT!', 'FAST!', 'NICE!', 'AWESOME!', 'SICK!'];
+const REACTION_COLORS = ['#9DFF00', '#B7FF00', '#FFFFFF', '#FFD700', '#00FF99'];
+
+const OBJECTS = [
+  { img: 'https://i.postimg.cc/W46X6GHm/Can.png', label: 'CAN', points: 100 },
+  { img: 'https://i.postimg.cc/HL4B4whQ/Bottle.png', label: 'BOTTLE', points: 100 },
+  { img: 'https://i.postimg.cc/Pqz2zWRY/Logo.png', label: 'LOGO', points: 150 },
+  { img: 'https://i.postimg.cc/TPqCqV4W/lightning.png', label: 'LIGHTNING', points: 200 },
+];
+
+// ======== SCREENS ========
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function startGame() {
+  score = 0; combo = 1; comboCount = 0; destroyed = 0; timeLeft = 15;
+  activeObjects = [];
+  gameRunning = true;
+  updateHUD();
+  document.getElementById('gameArea').innerHTML = '';
+  showScreen('s2');
+  setTimeout(() => {
+    startTimers();
+  }, 300);
+}
+
+function replayGame() { startGame(); }
+
+// ======== TIMERS ========
+function startTimers() {
+  gameTimer = setInterval(() => {
+    timeLeft--;
+    updateHUD();
+    if (timeLeft <= 0) endGame();
+  }, 1000);
+
+  scheduleSpawn();
+}
+
+function scheduleSpawn() {
+  if (!gameRunning) return;
+  const delay = 300 + Math.random() * 300;
+  spawnTimer = setTimeout(() => {
+    spawnObject();
+    scheduleSpawn();
+  }, delay);
+}
+
+function endGame() {
+  gameRunning = false;
+  clearInterval(gameTimer);
+  clearTimeout(spawnTimer);
+
+  // Remove remaining objects
+  document.querySelectorAll('.game-obj').forEach(el => el.remove());
+
+  if (score > bestScore) bestScore = score;
+
+  // Show analyzing screen
+  showScreen('s3');
+  document.getElementById('s3ScoreVal').textContent = score.toLocaleString();
+  document.getElementById('s3BestVal').textContent = `BEST: ${bestScore.toLocaleString()}`;
+
+  // Animate progress bar
+  const pct = Math.min(100, Math.round((score / 3000) * 100));
+  setTimeout(() => {
+    document.getElementById('progFill').style.width = pct + '%';
+    animateCounter('progPct', 0, pct, 2000, v => v + '%');
+  }, 200);
+
+  setTimeout(() => showResults(), 3000);
+}
+
+function showResults() {
+  const pct = Math.min(100, Math.round((score / 3000) * 100));
+  const titles = [
+    [0, 20, 'ROOKIE REFLEX'],
+    [21, 40, 'QUICK TAPPER'],
+    [41, 60, 'SPEED HUNTER'],
+    [61, 80, 'LIGHTNING STRIKE'],
+    [81, 95, 'DEW DESTROYER'],
+    [96, 100, 'REFLEX GOD'],
+  ];
+  let title = 'QUICK TAPPER';
+  for (const [min, max, t] of titles) {
+    if (pct >= min && pct <= max) { title = t; break; }
+  }
+
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultSpeed').textContent = pct + '%';
+  document.getElementById('resultScore').textContent = score.toLocaleString();
+  document.getElementById('resultDestroyed').textContent = destroyed;
+  showScreen('s4');
+}
+
+function animateCounter(id, from, to, duration, fmt = v => v) {
+  const el = document.getElementById(id);
+  const start = Date.now();
+  const tick = () => {
+    const elapsed = Date.now() - start;
+    const progress = Math.min(elapsed / duration, 1);
+    const val = Math.round(from + (to - from) * easeOut(progress));
+    el.textContent = fmt(val);
+    if (progress < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
+
+// ======== SPAWN OBJECTS ========
+function spawnObject() {
+  if (!gameRunning) return;
+  const gameArea = document.getElementById('gameArea');
+  const rect = gameArea.getBoundingClientRect();
+  if (!rect.width) return;
+
+  const obj = OBJECTS[Math.floor(Math.random() * OBJECTS.length)];
+  const el = document.createElement('div');
+  el.className = 'game-obj';
+  el.dataset.points = obj.points;
+
+  const x = 60 + Math.random() * (rect.width - 120);
+  const y = 160 + Math.random() * (rect.height - 280);
+  el.style.left = x + 'px';
+  el.style.top = y + 'px';
+
+  el.innerHTML = `
+    <div class="obj-inner">
+      <img src="${obj.img}" style="width:40px;height:40px;pointer-events:none;object-fit:contain;" />
+      <div class="crosshair"></div>
+    </div>
+  `;
+
+  gameArea.appendChild(el);
+  activeObjects.push(el);
+
+  // Scale in
+  el.animate([
+    { transform: 'translate(-50%,-50%) scale(0)', opacity: 0 },
+    { transform: 'translate(-50%,-50%) scale(1.1)', opacity: 1, offset: 0.7 },
+    { transform: 'translate(-50%,-50%) scale(1)', opacity: 1 }
+  ], { duration: 200, fill: 'forwards' });
+
+  // Auto-destroy after 1.5s (miss)
+  const lifeTimer = setTimeout(() => {
+    if (el.parentNode) {
+      missObject(el);
+    }
+  }, 1500);
+  el.dataset.lifeTimer = lifeTimer;
+
+  // Tap handler
+  el.addEventListener('pointerdown', (e) => {
+    e.stopPropagation();
+    clearTimeout(parseInt(el.dataset.lifeTimer));
+    hitObject(el, x, y);
+  });
+}
+
+function hitObject(el, x, y) {
+  if (!el.parentNode || !gameRunning) return;
+  el.remove();
+  activeObjects = activeObjects.filter(o => o !== el);
+
+  const pts = parseInt(el.dataset.points);
+  comboCount++;
+  if (comboCount >= 5) combo = 5;
+  else combo = comboCount;
+
+  const earned = pts * combo;
+  score += earned;
+  destroyed++;
+  updateHUD();
+  showFloatingScore(x, y, earned);
+  showReactionText(x, y - 40);
+  showBurst(x, y);
+}
+
+function missObject(el) {
+  if (!el.parentNode) return;
+  el.animate([
+    { opacity: 1, transform: 'translate(-50%,-50%) scale(1)' },
+    { opacity: 0, transform: 'translate(-50%,-50%) scale(0.3)' }
+  ], { duration: 200, fill: 'forwards' }).onfinish = () => el.remove();
+  activeObjects = activeObjects.filter(o => o !== el);
+  // Reset combo
+  comboCount = 0;
+  combo = 1;
+  updateHUD();
+}
+
+function showFloatingScore(x, y, pts) {
+  const gameArea = document.getElementById('gameArea');
+  const el = document.createElement('div');
+  el.className = 'score-popup';
+  el.textContent = '+' + pts;
+  el.style.left = (x - 20) + 'px';
+  el.style.top = (y - 30) + 'px';
+  gameArea.appendChild(el);
+  setTimeout(() => el.remove(), 800);
+}
+
+function showReactionText(x, y) {
+  const gameArea = document.getElementById('gameArea');
+  const el = document.createElement('div');
+  el.className = 'reaction-text';
+  const idx = Math.floor(Math.random() * REACTION_TEXTS.length);
+  el.textContent = REACTION_TEXTS[idx];
+  el.style.color = REACTION_COLORS[idx];
+  el.style.textShadow = `0 0 15px ${REACTION_COLORS[idx]}`;
+  el.style.left = Math.max(0, x - 60) + 'px';
+  el.style.top = Math.max(0, y - 20) + 'px';
+  gameArea.appendChild(el);
+  setTimeout(() => el.remove(), 700);
+}
+
+function showBurst(x, y) {
+  const gameArea = document.getElementById('gameArea');
+  const el = document.createElement('div');
+  el.className = 'burst';
+  el.style.left = x + 'px';
+  el.style.top = y + 'px';
+  el.style.background = 'radial-gradient(circle, rgba(157,255,0,0.8) 0%, rgba(157,255,0,0) 70%)';
+  gameArea.appendChild(el);
+  setTimeout(() => el.remove(), 400);
+}
+
+function updateHUD() {
+  const s = document.getElementById('scoreValue');
+  const t = document.getElementById('timeValue');
+  const c = document.getElementById('comboValue');
+  const cb = document.getElementById('comboBarText');
+
+  s.textContent = score.toLocaleString();
+  const mins = Math.floor(timeLeft / 60);
+  const secs = timeLeft % 60;
+  t.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+  c.textContent = `x${combo}`;
+
+  if (timeLeft <= 5) t.classList.add('time-warning');
+  else t.classList.remove('time-warning');
+
+  if (combo >= 2) {
+    c.classList.add('mega');
+    setTimeout(() => c.classList.remove('mega'), 300);
+  }
+
+  const idx = Math.min(combo, COMBO_NAMES.length - 1);
+  cb.textContent = COMBO_NAMES[idx];
+}
+
+// ======== PARTICLE CANVAS ========
+const canvas = document.getElementById('particleCanvas');
+const ctx = canvas.getContext('2d');
+let particles = [];
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+class Particle {
+  constructor() { this.reset(); }
+  reset() {
+    this.x = Math.random() * canvas.width;
+    this.y = Math.random() * canvas.height;
+    this.vx = (Math.random() - 0.5) * 0.5;
+    this.vy = -Math.random() * 0.8 - 0.2;
+    this.size = Math.random() * 2.5 + 0.5;
+    this.alpha = Math.random() * 0.6 + 0.2;
+    this.life = 1;
+  }
+  update() {
+    this.x += this.vx; this.y += this.vy;
+    this.life -= 0.004;
+    if (this.life <= 0 || this.y < -10) this.reset();
+  }
+  draw() {
+    ctx.save();
+    ctx.globalAlpha = this.life * this.alpha;
+    ctx.shadowBlur = 6;
+    ctx.shadowColor = '#9DFF00';
+    ctx.fillStyle = '#9DFF00';
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+for (let i = 0; i < 60; i++) particles.push(new Particle());
+
+function animateParticles() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  particles.forEach(p => { p.update(); p.draw(); });
+  requestAnimationFrame(animateParticles);
+}
+animateParticles();
+</script>
+</body>
+</html>

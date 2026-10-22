@@ -1,0 +1,1228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Whack the Fizz — 1920x1200 v2</title>
+
+<style>
+:root{
+  --green:#0ca84f;
+  --green-dark:#006b35;
+  --lime:#d7ff3f;
+  --ink:#09110d;
+  --cream:#f7f3df;
+  --danger:#ef3340;
+  --shadow:0 22px 70px rgba(0,0,0,.4);
+}
+
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+  user-select:none;
+}
+
+html,body{
+  width:100%;
+  height:100%;
+  margin:0;
+  overflow:hidden;
+  background:#04180e;
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+
+button{font:inherit}
+body{display:grid;place-items:center}
+
+/* EXACT TARGET FORMAT: 1920 x 1200 = 16:10 */
+.ad{
+  position:relative;
+  width:min(100vw,1920px);
+  aspect-ratio:16/10;
+  max-height:100dvh;
+  overflow:hidden;
+  isolation:isolate;
+  background:
+    radial-gradient(circle at 14% 10%,rgba(221,255,69,.32),transparent 25%),
+    radial-gradient(circle at 88% 14%,rgba(34,255,138,.18),transparent 30%),
+    radial-gradient(circle at 65% 90%,rgba(215,255,63,.08),transparent 28%),
+    linear-gradient(145deg,#0e9449 0%,#08783d 30%,#04542e 65%,#022819 100%);
+  box-shadow:var(--shadow);
+}
+
+@media (min-aspect-ratio:16/10){
+  .ad{height:100dvh;width:auto}
+}
+
+.ad:before{
+  content:"";
+  position:absolute;
+  inset:-10%;
+  z-index:-2;
+  opacity:.2;
+  background-image:
+    linear-gradient(25deg,transparent 45%,rgba(255,255,255,.14) 46%,transparent 48%),
+    linear-gradient(-25deg,transparent 45%,rgba(255,255,255,.09) 46%,transparent 48%);
+  background-size:110px 110px;
+  transform:rotate(7deg) scale(1.2);
+}
+
+.bubble{
+  position:absolute;
+  border-radius:50%;
+  border:1px solid rgba(255,255,255,.26);
+  background:rgba(255,255,255,.045);
+  box-shadow:inset 0 0 18px rgba(255,255,255,.14);
+  pointer-events:none;
+}
+
+.b1{width:78px;height:78px;left:4%;top:18%}
+.b2{width:34px;height:34px;right:26%;top:8%}
+.b3{width:110px;height:110px;right:4%;top:38%}
+.b4{width:54px;height:54px;left:10%;bottom:10%}
+.b5{width:28px;height:28px;right:19%;bottom:9%}
+
+/* Top bar */
+.topbar{
+  position:absolute;
+  z-index:10;
+  top:max(28px,env(safe-area-inset-top));
+  left:42px;
+  right:42px;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:28px;
+  color:white;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  font-weight:1000;
+  letter-spacing:-1px;
+  text-transform:uppercase;
+  font-style:italic;
+  filter:drop-shadow(0 5px 12px rgba(0,0,0,.22));
+}
+
+.brandMark{
+  width:74px;
+  height:74px;
+  background:linear-gradient(145deg,var(--lime),#fff56b);
+  position:relative;
+  box-shadow:
+    inset -10px -12px 20px rgba(0,100,48,.18),
+    0 10px 22px rgba(0,0,0,.2);
+  overflow:hidden;
+}
+
+.brandMark:after{
+  content:"";
+  position:absolute;
+  width:22px;
+  height:45px;
+  border-radius:50%;
+  background:#fff;
+  opacity:.7;
+  left:13px;
+  top:8px;
+  transform:rotate(20deg);
+}
+
+.brandMark.hasAsset{
+  background:transparent;
+  box-shadow:none;
+}
+
+.brandMark.hasAsset:after{
+  display:none;
+}
+
+.brandName{
+  font-size:50px;
+  line-height:.82;
+}
+
+.brandName small{
+  display:block;
+  font-size:.31em;
+  letter-spacing:3px;
+  font-style:normal;
+  margin-top:7px;
+  opacity:.9;
+}
+
+.hud{
+  display:flex;
+  gap:12px;
+}
+
+.pill{
+  min-width:120px;
+  padding:13px 18px;
+  border-radius:18px;
+  background:rgba(4,32,18,.68);
+  border:1px solid rgba(255,255,255,.16);
+  backdrop-filter:blur(12px);
+  text-align:center;
+  box-shadow:0 10px 28px rgba(0,0,0,.2);
+}
+
+.pill b{
+  display:block;
+  font-size:34px;
+  line-height:1;
+}
+
+.pill span{
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:2px;
+  opacity:.72;
+}
+
+/* Landscape title area */
+.gameTitle{
+  position:absolute;
+  top:15%;
+  left:4.5%;
+  width:30%;
+  color:white;
+  text-shadow:0 5px 14px rgba(0,0,0,.28);
+  pointer-events:none;
+  z-index:5;
+}
+
+.gameTitle h1{
+  font-size:clamp(54px,5vw,92px);
+  line-height:.86;
+  margin:0;
+  font-weight:1000;
+  letter-spacing:-4px;
+  text-transform:uppercase;
+  font-style:italic;
+}
+
+.gameTitle em{
+  color:var(--lime);
+  font-style:inherit;
+}
+
+.gameTitle p{
+  margin:20px 0 0;
+  font-size:clamp(16px,1.35vw,26px);
+  font-weight:800;
+  letter-spacing:3px;
+  text-transform:uppercase;
+  line-height:1.5;
+  max-width:520px;
+}
+
+/* 3x3 board fills right side */
+.board{
+  position:absolute;
+  left:36%;
+  right:4%;
+  top:15%;
+  bottom:8%;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  grid-template-rows:repeat(3,1fr);
+  gap:2.8% 3%;
+  align-items:end;
+}
+
+.slot{
+  position:relative;
+  width:100%;
+  height:100%;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  overflow:visible;
+  touch-action:manipulation;
+}
+
+.holeBack{
+  position:absolute;
+  left:5%;
+  right:5%;
+  bottom:2%;
+  height:28%;
+  border-radius:50%;
+  background:radial-gradient(ellipse at 50% 35%,#18211b 0 36%,#040605 52%,#000 71%);
+  box-shadow:0 10px 16px rgba(0,0,0,.4),inset 0 2px 4px rgba(255,255,255,.08);
+  z-index:1;
+}
+
+/* This mask clips the can/bomb so it sinks INTO the hole visually */
+.targetMask{
+  position:absolute;
+  left:0;
+  right:0;
+  top:0;
+  bottom:22%;
+  overflow:hidden;
+  z-index:2;
+}
+
+.holeRim{
+  position:absolute;
+  left:2%;
+  right:2%;
+  bottom:0;
+  height:20%;
+  border-radius:50%;
+  border-top:10px solid rgba(10,15,11,.72);
+  box-shadow:0 7px 12px rgba(0,0,0,.34);
+  z-index:4;
+  pointer-events:none;
+}
+
+.target{
+  position:absolute;
+  left:50%;
+  bottom:-6%;
+  width:62%;
+  height:78%;
+  transform:translate(-50%,82%) scale(.88);
+  transform-origin:50% 100%;
+  z-index:2;
+  transition:transform 160ms cubic-bezier(.2,.95,.3,1.1),filter 100ms;
+  cursor:pointer;
+  pointer-events:none;
+}
+
+.slot.active .target{
+  transform:translate(-50%,0) scale(1);
+  pointer-events:auto;
+}
+
+.slot.hit .target{
+  transform:translate(-50%,60%) scale(.7) rotate(-8deg);
+  filter:brightness(1.4);
+}
+
+.slot.miss .target{
+  transform:translate(-50%,92%) scale(.7);
+}
+
+/* Can */
+.can{
+  position:absolute;
+  left:23%;
+  right:23%;
+  top:7%;
+  bottom:5%;
+  border-radius:19% 19% 15% 15% / 9% 9% 8% 8%;
+  background:linear-gradient(90deg,#006a31 0%,#10a94d 18%,#58cf6f 43%,#0b9546 65%,#025e2b 100%);
+  border:2px solid rgba(255,255,255,.45);
+  box-shadow:
+    inset 9px 0 16px rgba(255,255,255,.17),
+    inset -8px 0 13px rgba(0,0,0,.2),
+    0 14px 20px rgba(0,0,0,.26);
+}
+
+.can:before,.can:after{
+  content:"";
+  position:absolute;
+  left:2%;
+  right:2%;
+  height:7%;
+  border-radius:50%;
+  background:linear-gradient(#d4d7cf,#767d75);
+}
+
+.can:before{
+  top:-2%;
+  box-shadow:inset 0 2px 2px #fff;
+}
+
+.can:after{
+  bottom:-2%;
+  background:linear-gradient(#727972,#c8ccc5);
+}
+
+.canLabel{
+  position:absolute;
+  inset:25% 4% auto;
+  text-align:center;
+  color:white;
+  font-size:clamp(22px,2vw,40px);
+  font-weight:1000;
+  line-height:.8;
+  letter-spacing:-1px;
+  transform:rotate(-9deg);
+  text-shadow:0 2px 0 rgba(0,90,45,.55);
+}
+
+.canLabel i{
+  display:block;
+  color:var(--lime);
+  font-size:.4em;
+  letter-spacing:1.5px;
+  margin-top:8px;
+}
+
+.lemon{
+  position:absolute;
+  width:44%;
+  aspect-ratio:1;
+  border-radius:50%;
+  right:-4%;
+  bottom:15%;
+  background:radial-gradient(circle at 40% 40%,#fff978 0 10%,#ddff45 13% 45%,#9ccd00 47% 58%,#658d00 60% 100%);
+  border:3px solid rgba(255,255,255,.55);
+  transform:rotate(18deg);
+  box-shadow:0 6px 12px rgba(0,0,0,.18);
+}
+
+.leaf{
+  position:absolute;
+  width:34%;
+  height:18%;
+  border-radius:80% 10% 80% 10%;
+  background:#9ff72b;
+  right:-8%;
+  bottom:35%;
+  transform:rotate(-28deg);
+}
+
+/* Bomb */
+.bad{
+  position:absolute;
+  left:17%;
+  right:17%;
+  top:16%;
+  bottom:3%;
+  border-radius:50% 50% 42% 42%;
+  background:radial-gradient(circle at 36% 30%,#5f6864 0 8%,#272d2a 28%,#111512 70%);
+  border:2px solid rgba(255,255,255,.13);
+  box-shadow:0 14px 22px rgba(0,0,0,.38);
+}
+
+.bad:before{
+  content:"";
+  position:absolute;
+  width:15%;
+  height:20%;
+  left:44%;
+  top:-15%;
+  background:#494f4a;
+  border-radius:4px;
+  transform:rotate(8deg);
+}
+
+.bad:after{
+  content:"";
+  position:absolute;
+  width:26%;
+  height:24%;
+  left:49%;
+  top:-26%;
+  border:5px solid #ffb029;
+  border-left-color:transparent;
+  border-bottom-color:transparent;
+  border-radius:50%;
+  transform:rotate(-15deg);
+}
+
+.badFace{
+  position:absolute;
+  inset:35% 0 auto;
+  text-align:center;
+  color:#ffcc3a;
+  font-size:clamp(24px,2.1vw,44px);
+  font-weight:1000;
+}
+
+/* Asset image placeholders */
+.spriteAsset,
+.logoAsset{
+  width:100%;
+  height:100%;
+  display:block;
+  object-fit:contain;
+  object-position:center;
+}
+
+.spriteWrap{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.placeholderTag{
+  position:absolute;
+  inset:auto 50% 8% auto;
+  transform:translateX(50%);
+  min-width:max-content;
+  padding:6px 10px;
+  border-radius:999px;
+  background:rgba(0,0,0,.48);
+  color:#fff;
+  font-size:10px;
+  line-height:1;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  border:1px solid rgba(255,255,255,.18);
+  backdrop-filter:blur(8px);
+  pointer-events:none;
+  white-space:nowrap;
+}
+
+.brandMark .placeholderTag,
+.logoBig .placeholderTag{
+  inset:auto auto 4px 50%;
+  transform:translateX(-50%);
+  font-size:9px;
+}
+
+.brandMark .logoAsset{
+  transform:none;
+}
+
+.logoBig{
+  width:150px;
+  height:150px;
+  background:linear-gradient(145deg,var(--lime),#f9ff81);
+  box-shadow:0 18px 50px rgba(0,0,0,.3);
+  position:relative;
+  margin-bottom:32px;
+  overflow:hidden;
+}
+
+.logoBig:after{
+  content:"";
+  position:absolute;
+  width:45px;
+  height:88px;
+  background:rgba(255,255,255,.75);
+  border-radius:50%;
+  left:28px;
+  top:14px;
+  transform:rotate(20deg);
+}
+
+.logoBig.hasAsset{
+  background:transparent;
+  box-shadow:none;
+}
+
+.logoBig.hasAsset:after{
+  display:none;
+}
+
+/* Floating score */
+.points{
+  position:absolute;
+  z-index:9;
+  color:#fff;
+  font-weight:1000;
+  font-size:clamp(28px,2.3vw,44px);
+  text-shadow:0 4px 9px rgba(0,0,0,.35);
+  pointer-events:none;
+  animation:floatUp .7s ease-out forwards;
+}
+
+.points.good{color:var(--lime)}
+.points.badp{color:#ffb3b8}
+
+@keyframes floatUp{
+  0%{transform:translate(-50%,0) scale(.7);opacity:0}
+  20%{opacity:1;transform:translate(-50%,-10px) scale(1.15)}
+  100%{transform:translate(-50%,-80px) scale(.9);opacity:0}
+}
+
+/* Start/end overlays */
+.overlay{
+  position:absolute;
+  inset:0;
+  z-index:30;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:4%;
+  background:linear-gradient(rgba(0,30,14,.2),rgba(0,20,10,.74));
+  backdrop-filter:blur(5px);
+  transition:opacity .25s,visibility .25s;
+}
+
+.overlay.hidden{
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+}
+
+.panel{
+  width:min(92%,1150px);
+  min-height:620px;
+  display:grid;
+  grid-template-columns:.9fr 1.15fr;
+  gap:58px;
+  align-items:center;
+  color:white;
+  background:rgba(2,32,17,.26);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:36px;
+  padding:54px 62px;
+  box-shadow:0 30px 80px rgba(0,0,0,.3);
+}
+
+.panelIntro{text-align:left}
+
+.panel h2{
+  font-size:clamp(54px,5vw,90px);
+  line-height:.86;
+  margin:0;
+  text-transform:uppercase;
+  font-style:italic;
+  font-weight:1000;
+  letter-spacing:-4px;
+}
+
+.panel h2 span{color:var(--lime)}
+
+.panel .sub{
+  margin:22px 0 0;
+  max-width:620px;
+  font-weight:700;
+  opacity:.9;
+  font-size:clamp(18px,1.4vw,28px);
+  line-height:1.5;
+}
+
+.panelControls{
+  display:flex;
+  flex-direction:column;
+  gap:24px;
+}
+
+.howto{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:18px;
+}
+
+.how{
+  min-height:180px;
+  border:1px solid rgba(255,255,255,.18);
+  border-radius:24px;
+  background:rgba(3,39,20,.68);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
+}
+
+.miniCan{
+  width:52px;
+  height:92px;
+  border-radius:10px;
+  background:linear-gradient(90deg,#086d35,#4cd267,#087a39);
+  border:1px solid rgba(255,255,255,.6);
+  position:relative;
+}
+
+.miniCan:after{
+  content:"FIZZ";
+  position:absolute;
+  left:0;
+  right:0;
+  top:34px;
+  color:white;
+  font-weight:1000;
+  font-size:14px;
+  transform:rotate(-10deg);
+  text-align:center;
+}
+
+.miniBomb{
+  width:72px;
+  height:72px;
+  border-radius:50%;
+  background:#1d231f;
+  position:relative;
+}
+
+.miniBomb:after{
+  content:"";
+  position:absolute;
+  width:22px;
+  height:20px;
+  border:5px solid #ffb029;
+  border-left:0;
+  border-bottom:0;
+  border-radius:50%;
+  right:1px;
+  top:-16px;
+}
+
+.how strong{
+  font-size:18px;
+  letter-spacing:1px;
+  text-transform:uppercase;
+}
+
+.how strong.goodTxt{color:var(--lime)}
+.how strong.badTxt{color:#ff8f97}
+
+.playBtn,.ctaBtn{
+  width:100%;
+  border:0;
+  border-radius:20px;
+  padding:23px 28px;
+  background:linear-gradient(180deg,#ecff62,#b8ec18);
+  color:#0a361b;
+  font-weight:1000;
+  font-size:clamp(22px,1.6vw,32px);
+  text-transform:uppercase;
+  letter-spacing:.5px;
+  box-shadow:0 12px 0 #658e00,0 18px 30px rgba(0,0,0,.3);
+  cursor:pointer;
+  transform:translateY(0);
+  transition:.12s;
+}
+
+.playBtn:active,.ctaBtn:active{
+  transform:translateY(6px);
+  box-shadow:0 6px 0 #658e00,0 10px 18px rgba(0,0,0,.28);
+}
+
+.endStats{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:18px;
+}
+
+.stat{
+  padding:26px 14px;
+  border-radius:22px;
+  background:rgba(4,38,20,.7);
+  border:1px solid rgba(255,255,255,.15);
+  text-align:center;
+}
+
+.stat b{
+  display:block;
+  font-size:clamp(42px,3vw,64px);
+  color:var(--lime);
+}
+
+.stat span{
+  font-size:12px;
+  letter-spacing:1.8px;
+  text-transform:uppercase;
+  opacity:.75;
+}
+
+.endActions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+
+.secondary{
+  border:1px solid rgba(255,255,255,.25);
+  border-radius:20px;
+  background:rgba(255,255,255,.1);
+  color:#fff;
+  font-weight:900;
+  font-size:22px;
+  text-transform:uppercase;
+  cursor:pointer;
+}
+
+.flash{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  z-index:20;
+  opacity:0;
+}
+
+.flash.goodFlash{animation:goodFlash .25s}
+.flash.badFlash{animation:badFlash .25s}
+
+@keyframes goodFlash{50%{opacity:1;background:rgba(213,255,63,.16)}}
+@keyframes badFlash{50%{opacity:1;background:rgba(239,51,64,.24)}}
+
+.shake{animation:shake .25s}
+@keyframes shake{
+  0%,100%{transform:translateX(0)}
+  25%{transform:translateX(-11px)}
+  75%{transform:translateX(11px)}
+}
+
+.foot{
+  position:absolute;
+  left:4.5%;
+  bottom:max(22px,env(safe-area-inset-bottom));
+  color:rgba(255,255,255,.62);
+  font-size:11px;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  pointer-events:none;
+}
+
+/* fallback for smaller landscape screens */
+@media (max-width:1100px){
+  .topbar{left:24px;right:24px;top:18px}
+  .brandMark{width:54px;height:54px}
+  .brandName{font-size:34px}
+  .pill{min-width:88px;padding:10px 12px}
+  .pill b{font-size:26px}
+  .gameTitle{left:3.5%;width:31%;top:17%}
+  .board{left:36%;right:3%;top:17%;bottom:8%}
+  .panel{padding:34px;gap:34px;min-height:500px}
+  .logoBig{width:105px;height:105px}
+  .how{min-height:140px}
+}
+
+@media (max-height:700px){
+  .topbar{top:14px}
+  .gameTitle{top:14%}
+  .board{top:14%;bottom:6%}
+  .panel{min-height:0;padding:28px 36px}
+  .logoBig{width:90px;height:90px;margin-bottom:18px}
+  .panel .sub{margin-top:14px}
+  .how{min-height:120px}
+  .foot{bottom:10px}
+}
+</style>
+</head>
+
+<body>
+<main class="ad" id="ad">
+  <div class="bubble b1"></div>
+  <div class="bubble b2"></div>
+  <div class="bubble b3"></div>
+  <div class="bubble b4"></div>
+  <div class="bubble b5"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="brandMark asset-logo-small"></div>
+      <div class="brandName">FIZZ<small>LEMON LIME</small></div>
+    </div>
+
+    <div class="hud">
+      <div class="pill"><b id="score">0</b><span>Score</span></div>
+      <div class="pill"><b id="lives">3</b><span>Lives</span></div>
+      <div class="pill"><b id="timer">00:30</b><span>Time</span></div>
+    </div>
+  </header>
+
+  <section class="gameTitle">
+    <h1>WHACK THE <em>FIZZ</em></h1>
+    <p>Tap the cans. Avoid the bombs.</p>
+  </section>
+
+  <section class="board" id="board" aria-label="Whack-a-brand game board"></section>
+
+  <div class="flash" id="flash"></div>
+  <div class="foot">Hit as many lemon-lime cans as you can before the 30-second timer runs out.</div>
+
+  <section class="overlay" id="startOverlay">
+    <div class="panel">
+      <div class="panelIntro">
+        <div class="logoBig asset-logo-large"></div>
+        <h2>WHACK THE <span>FIZZ</span></h2>
+        <p class="sub">Hit as many lemon-lime cans as you can before the 30-second timer runs out.</p>
+      </div>
+
+      <div class="panelControls">
+        <div class="howto">
+          <div class="how">
+            <div id="miniCanHolder"></div>
+            <strong class="goodTxt">Tap • +10</strong>
+          </div>
+          <div class="how">
+            <div id="miniBombHolder"></div>
+            <strong class="badTxt">Avoid • -1 life</strong>
+          </div>
+        </div>
+        <button class="playBtn" id="playBtn">Tap to Play</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="overlay hidden" id="endOverlay">
+    <div class="panel">
+      <div class="panelIntro">
+        <div class="logoBig asset-logo-large"></div>
+        <h2>YOUR <span>TIME</span></h2>
+        <p class="sub" id="resultText">Nice run.</p>
+      </div>
+
+      <div class="panelControls">
+        <div class="endStats">
+          <div class="stat"><b id="finalScore">0</b><span>Final score</span></div>
+          <div class="stat"><b id="accuracy">0%</b><span>Accuracy</span></div>
+        </div>
+
+        <div class="endActions">
+          <button class="secondary" id="againBtn">Play Again</button>
+          <button class="ctaBtn" id="ctaBtn">Watch More</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+  const GAME_SECONDS = 30;
+  const START_LIVES = 3;
+  const HIT_SCORE = 10;
+  const BAD_PENALTY = 10;
+
+  const ASSETS = {
+    logo: '7up-logo.png',
+    can: '7up-Can.png',
+    bomb: 'bomb.png'
+  };
+
+  const slots = [];
+  const board = document.getElementById('board');
+  const ad = document.getElementById('ad');
+  const scoreEl = document.getElementById('score');
+  const livesEl = document.getElementById('lives');
+  const timerEl = document.getElementById('timer');
+  const startOverlay = document.getElementById('startOverlay');
+  const endOverlay = document.getElementById('endOverlay');
+  const finalScoreEl = document.getElementById('finalScore');
+  const accuracyEl = document.getElementById('accuracy');
+  const resultText = document.getElementById('resultText');
+  const flash = document.getElementById('flash');
+
+  let score = 0;
+  let lives = START_LIVES;
+  let timeLeft = GAME_SECONDS;
+  let running = false;
+  let timerId = 0;
+  let spawnId = 0;
+  let serial = 0;
+  let totalTargets = 0;
+  let successfulHits = 0;
+  let activeSlots = new Set();
+
+  function escapeHTML(str){
+    return String(str).replace(/[&<>"']/g, m => ({
+      '&':'&amp;',
+      '<':'&lt;',
+      '>':'&gt;',
+      '"':'&quot;',
+      "'":'&#39;'
+    }[m]));
+  }
+
+  function logoPlaceholderHTML(label){
+    return `<div class="placeholderTag">${label}</div>`;
+  }
+
+  function hydrateLogos(){
+    document.querySelectorAll('.asset-logo-small, .asset-logo-large').forEach(el => {
+      if(ASSETS.logo){
+        el.classList.add('hasAsset');
+        el.innerHTML = `<img class="logoAsset" src="${escapeHTML(ASSETS.logo)}" alt="Logo">`;
+      }else{
+        el.innerHTML = logoPlaceholderHTML('');
+      }
+    });
+  }
+
+  function makeMiniCanMarkup(){
+    if(ASSETS.can){
+      return `
+        <div style="width:64px;height:94px;position:relative">
+          <img class="spriteAsset" src="${escapeHTML(ASSETS.can)}" alt="Can">
+        </div>`;
+    }
+    return `<div class="miniCan"></div>`;
+  }
+
+  function makeMiniBombMarkup(){
+    if(ASSETS.bomb){
+      return `
+        <div style="width:78px;height:78px;position:relative">
+          <img class="spriteAsset" src="${escapeHTML(ASSETS.bomb)}" alt="Bomb">
+        </div>`;
+    }
+    return `<div class="miniBomb"></div>`;
+  }
+
+  function hydrateMiniAssets(){
+    document.getElementById('miniCanHolder').innerHTML = makeMiniCanMarkup();
+    document.getElementById('miniBombHolder').innerHTML = makeMiniBombMarkup();
+  }
+
+  function makeGoodTargetMarkup(){
+    if(ASSETS.can){
+      return `
+        <div class="spriteWrap">
+          <img class="spriteAsset" src="${escapeHTML(ASSETS.can)}" alt="Can">
+        </div>`;
+    }
+
+    return `
+      <div class="can">
+        <div class="canLabel">FIZZ<i>LEMON LIME</i></div>
+        <div class="lemon"></div>
+        <div class="leaf"></div>
+      </div>`;
+  }
+
+  function makeBadTargetMarkup(){
+    if(ASSETS.bomb){
+      return `
+        <div class="spriteWrap">
+          <img class="spriteAsset" src="${escapeHTML(ASSETS.bomb)}" alt="Bomb">
+        </div>`;
+    }
+
+    return `
+      <div class="bad">
+        <div class="badFace">×</div>
+      </div>`;
+  }
+
+  function makeTarget(type){
+    const target = document.createElement('div');
+    target.className = 'target';
+    target.dataset.type = type;
+
+    if(type === 'good'){
+      target.innerHTML = makeGoodTargetMarkup();
+    } else {
+      target.innerHTML = makeBadTargetMarkup();
+    }
+
+    return target;
+  }
+
+  for(let i=0;i<9;i++){
+    const slot = document.createElement('div');
+    slot.className='slot';
+    slot.innerHTML = '<div class="holeBack"></div><div class="targetMask"></div><div class="holeRim"></div>';
+    board.appendChild(slot);
+    slots.push(slot);
+  }
+
+  function formatTime(t){
+    return `00:${String(Math.max(0,t)).padStart(2,'0')}`;
+  }
+
+  function updateHUD(){
+    scoreEl.textContent = score;
+    livesEl.textContent = lives;
+    timerEl.textContent = formatTime(timeLeft);
+  }
+
+  function burst(kind, slot, text){
+    flash.className = `flash ${kind==='good'?'goodFlash':'badFlash'}`;
+    setTimeout(()=>flash.className='flash',280);
+
+    const r = slot.getBoundingClientRect();
+    const ar = ad.getBoundingClientRect();
+
+    const p = document.createElement('div');
+    p.className = `points ${kind==='good'?'good':'badp'}`;
+    p.textContent = text;
+    p.style.left = `${r.left-ar.left+r.width/2}px`;
+    p.style.top = `${r.top-ar.top+r.height*.34}px`;
+
+    ad.appendChild(p);
+    setTimeout(()=>p.remove(),750);
+  }
+
+  function clearSlot(slot, instant=false){
+    if(!slot) return;
+
+    activeSlots.delete(slot);
+    slot.classList.remove('active','hit','miss');
+
+    const target = slot.querySelector('.target');
+    if(target){
+      if(instant) target.remove();
+      else setTimeout(()=>target.remove(),180);
+    }
+  }
+
+  function hit(slot, target){
+    if(!running || !slot.classList.contains('active') || target.dataset.done) return;
+
+    target.dataset.done='1';
+
+    const type = target.dataset.type;
+
+    slot.classList.remove('active');
+    slot.classList.add('hit');
+    activeSlots.delete(slot);
+
+    if(type==='good'){
+      score += HIT_SCORE;
+      successfulHits++;
+      burst('good',slot,`+${HIT_SCORE}`);
+
+      if(navigator.vibrate) navigator.vibrate(18);
+    }else{
+      lives--;
+      score = Math.max(0, score - BAD_PENALTY);
+
+      burst('bad',slot,`-${BAD_PENALTY}`);
+
+      ad.classList.remove('shake');
+      void ad.offsetWidth;
+      ad.classList.add('shake');
+
+      if(navigator.vibrate) navigator.vibrate([45,35,45]);
+    }
+
+    updateHUD();
+
+    setTimeout(()=>clearSlot(slot),140);
+
+    if(lives<=0) endGame('Out of lives!');
+  }
+
+  function spawnOne(){
+    if(!running) return;
+
+    const available = slots.filter(s=>!activeSlots.has(s));
+    if(!available.length) return;
+
+    const slot = available[Math.floor(Math.random()*available.length)];
+    const badChance = Math.min(.33, .18 + (GAME_SECONDS-timeLeft)*.005);
+    const type = Math.random() < badChance ? 'bad' : 'good';
+
+    const target = makeTarget(type);
+    const id = ++serial;
+    target.dataset.id = id;
+
+    const targetMask = slot.querySelector('.targetMask');
+    targetMask.appendChild(target);
+
+    activeSlots.add(slot);
+    totalTargets++;
+
+    target.addEventListener('pointerdown', e=>{
+      e.preventDefault();
+      hit(slot,target);
+    }, {passive:false});
+
+    requestAnimationFrame(()=>slot.classList.add('active'));
+
+    const visibleMs = Math.max(
+      520,
+      1040 - (GAME_SECONDS-timeLeft)*16 + Math.random()*220
+    );
+
+    setTimeout(()=>{
+      if(!running || target.dataset.done || !target.isConnected) return;
+
+      target.dataset.done='1';
+      slot.classList.remove('active');
+      slot.classList.add('miss');
+      activeSlots.delete(slot);
+
+      setTimeout(()=>clearSlot(slot),160);
+    },visibleMs);
+  }
+
+  function scheduleSpawns(){
+    if(!running) return;
+
+    spawnOne();
+
+    if(Math.random()>.48){
+      setTimeout(()=>running&&spawnOne(),100+Math.random()*160);
+    }
+
+    const next = Math.max(
+      330,
+      650 - (GAME_SECONDS-timeLeft)*8 + Math.random()*180
+    );
+
+    spawnId = setTimeout(scheduleSpawns,next);
+  }
+
+  function startGame(){
+    clearInterval(timerId);
+    clearTimeout(spawnId);
+
+    activeSlots.forEach(s=>clearSlot(s,true));
+    activeSlots.clear();
+
+    score=0;
+    lives=START_LIVES;
+    timeLeft=GAME_SECONDS;
+    totalTargets=0;
+    successfulHits=0;
+    serial=0;
+
+    running=true;
+
+    updateHUD();
+
+    startOverlay.classList.add('hidden');
+    endOverlay.classList.add('hidden');
+
+    scheduleSpawns();
+
+    timerId=setInterval(()=>{
+      if(!running) return;
+
+      timeLeft--;
+      updateHUD();
+
+      if(timeLeft<=0){
+        endGame('Time is up!');
+      }
+    },1000);
+  }
+
+  function endGame(reason){
+    if(!running) return;
+
+    running=false;
+
+    clearInterval(timerId);
+    clearTimeout(spawnId);
+
+    activeSlots.forEach(s=>clearSlot(s,true));
+    activeSlots.clear();
+
+    finalScoreEl.textContent=score;
+
+    const acc = totalTargets
+      ? Math.round(successfulHits / totalTargets * 100)
+      : 0;
+
+    accuracyEl.textContent=`${acc}%`;
+    resultText.textContent=`${reason} You scored ${score} points.`;
+
+    setTimeout(()=>endOverlay.classList.remove('hidden'),220);
+  }
+
+  document.getElementById('playBtn').addEventListener('click',startGame);
+  document.getElementById('againBtn').addEventListener('click',startGame);
+
+  document.getElementById('ctaBtn').addEventListener('click',()=>{
+    const url='https://www.youtube.com/user/7UP';
+    window.open(url,'_blank','noopener,noreferrer');
+  });
+
+  hydrateLogos();
+  hydrateMiniAssets();
+  updateHUD();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="ad.size" content="width=320,height=480">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tea Ad - Interstitial</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: url('https://i.postimg.cc/CdTggdW5/background.jpg') center/cover no-repeat fixed;
+            height: 100vh;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        /* Fullscreen Sections */
+        .parallax-screen {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        h2 {
+            font-family: Arial, sans-serif;
+            font-size: 24px;
+            font-weight: bold;
+            color: black;
+            margin-bottom: 10px;
+            margin-top: 30px;
+        }
+
+        p { 
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            color: black;
+            opacity: 0.8;
+            margin-top: 10px; /* Adjusted margin */
+            position: static; /* Removed unnecessary positioning */
+        }
+
+
+        /* Logo */
+        .logo {
+            position: absolute;
+            top: 5%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+        }
+
+        /* Tea Cup & Steam */
+        .tea-container {
+            position: fixed;
+            bottom: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 1.5s ease-in-out;
+        }
+
+        .tea-cup {
+            right: 15px;
+            width: 200px;
+            z-index: 10
+            ;
+        }
+
+        .steam {
+            width: 200px;
+            opacity: 0.3;
+            animation: steam-rise 3s ease-in-out infinite;
+        }
+
+        @keyframes steam-rise {
+            0% { transform: translateY(0px); opacity: 0.8; }
+            50% { transform: translateY(-5px); opacity: 0.4; }
+            100% { transform: translateY(-10px); opacity: 0; }
+        }
+
+        /* Floating Tea Leaves */
+        .tea-leaves {
+            position: absolute;
+            animation: float 5s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        /* Random Leaf Positions */
+        .leaf1 { top: 40%; left: 15%; width: 60px;}
+        .leaf2 { top: 25%; left: 65%; width: 200px; animation-delay: 1s; }
+        .leaf3 { top: 80%; left: -10%; width: 100px; animation-delay: 2s;}
+        .leaf4 { top: 86%; left: 70%; width: 80px; animation-delay: 3s;}
+        .leaf5 { top: 30%; left: -5%; width: 120px; animation-delay: 4s; }
+        .leaf6 { top: 50%; left: 85%; width: 120px; animation-delay: 2s; }
+        .leaf7 { top: 80%; left: 85%; width: 80px; animation-delay: 3s; } 
+        .leaf8 { top: 10%; left: -10%; width: 120px; animation-delay: 1s; }
+        .leaf9 { top: 50%; left: 85%; width: 120px; animation-delay: 3s; }
+        .leaf10 { top: 85%; left: 10%; width: 80px; animation-delay: 2s; }
+        .leaf11 { top: 93%; left: 65%; width: 80px; animation-delay: 4s; }
+
+        /* Scroll Indicator */
+        .scroll-indicator {
+            position: absolute;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            animation: bounce 1.5s infinite;
+            z-index: -2;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0) translateX(-50%); }
+            50% { transform: translateY(10px) translateX(-50%); }
+        }
+
+        /* CTA Button */
+        .cta-button {
+            display: inline-block;
+            background-color: #FCD600;
+            color: black;
+            font-weight: bold;
+            padding: 12px 20px;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: 0.3s ease;
+            border: 2px solid #E1FF00; /* Border size and color */
+        }
+
+        .cta-button:hover {
+            background-color: #E1FF00;
+        }
+
+        /* Full-Width Table (Last Screen) */
+        .table {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            z-index: -1;
+        }
+    </style>
+</head>
+<body>
+    <div class="tea-container">
+        <img src="https://i.postimg.cc/7ZXZgMFN/steam.png" alt="Steam" class="steam">
+        <img src="https://i.postimg.cc/Z5mWPqCJ/tea-cup.png" alt="Tea Cup" class="tea-cup">
+    </div>
+    
+    <section class="parallax-screen" id="screen1">
+        <img src="https://i.postimg.cc/WpQF38VF/logo.png" alt="Brand Logo" class="logo">
+        <img src="https://i.postimg.cc/DzymDYrD/tea-leaves1.png" class="tea-leaves leaf1">
+        <img src="https://i.postimg.cc/6QjTNLzQ/tea-leaves2.png" class="tea-leaves leaf2">
+        <img src="https://i.postimg.cc/gJxjcXBH/tea-leaves3.png" class="tea-leaves leaf3">
+        <img src="https://i.postimg.cc/KzCz1G6S/tea-leaves4.png" class="tea-leaves leaf4">
+        <img src="https://i.postimg.cc/RC3J48kx/scroll-indicator.png" alt="Scroll Down" class="scroll-indicator">
+    </section>
+
+    <section class="parallax-screen" id="screen2">
+        <h2>Finest Handpicked Tea Leaves</h2>
+        <p>Experience the perfect aroma & taste.</p>
+        <img src="https://i.postimg.cc/Rhf0Krm3/tea-leaves5.png" class="tea-leaves leaf5">
+        <img src="https://i.postimg.cc/fTnyZb7Y/tea-leaves6.png" class="tea-leaves leaf6">
+        <img src="https://i.postimg.cc/y6SxwRRV/tea-leaves7.png" class="tea-leaves leaf7">
+    </section>
+
+    <section class="parallax-screen" id="screen3">
+        <h2>Taste the Authentic <br> Pakistani Tea</h2>
+        <img src="https://i.postimg.cc/vHf16n8P/table.png" alt="Table" class="table">
+        <button class="cta-button" onclick="window.location.href='https://meethappyads.com/';">
+            Shop Now
+        </button>
+        <img src="https://i.postimg.cc/q75BFBMh/tea-leaves8.png" class="tea-leaves leaf8">
+        <img src="https://i.postimg.cc/fTnyZb7Y/tea-leaves6.png" class="tea-leaves leaf9">
+        <img src="https://i.postimg.cc/MTfZJkvs/tea-leaves10.png" class="tea-leaves leaf10">
+        <img src="https://i.postimg.cc/PJGXt6Dd/tea-leaves11.png" class="tea-leaves leaf11">
+    </section>
+
+    <script>
+        document.addEventListener("scroll", function() {
+            let scrollPosition = window.scrollY;
+            let screenHeight = window.innerHeight;
+            
+            document.querySelectorAll(".tea-leaves").forEach((leaf, index) => {
+                let speed = (index + 1) * 0.3;
+                leaf.style.transform = `translateY(${scrollPosition * speed}px)`;
+            });
+
+            let teaContainer = document.querySelector(".tea-container");
+            if (scrollPosition > screenHeight * 1.5) {
+                teaContainer.style.transform = "translateX(-50%) translateY(100px)";
+            } else {
+                teaContainer.style.transform = "translateX(-50%) translateY(0)";
+            }
+        });
+    </script>
+</body>
+</html>

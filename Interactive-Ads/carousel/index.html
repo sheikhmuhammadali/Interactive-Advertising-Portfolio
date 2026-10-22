@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="ad.size" content="width=320,height=480">
+<title>Daraz Carousel Ad — Interactive</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box }
+  :root{
+    --brand:#F85606;
+    --ink:#0F0F0F;
+    --card:#111;
+    --glass:rgba(255,255,255,.12);
+    --glass-strong:rgba(255,255,255,.18);
+    --round:18px;
+  }
+  html,body{ height:100%; }
+  body{
+    min-height:100dvh;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    color:#fff; overflow:hidden;
+    background: radial-gradient(1000px 600px at 15% 0%, #FFBB73 0%, transparent 50%),
+                radial-gradient(900px 600px at 100% 100%, #FF7A3D 0%, transparent 50%),
+                linear-gradient(180deg, #1D0E09 0%, #070503 100%);
+  }
+
+  /* Container */
+  .ad-container{
+    width:100%;
+    height:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-start;
+    gap:12%;
+    position:relative;
+    padding:22px 14px 22px;
+  }
+
+  /* Header */
+  .header{
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .logo{
+    height:64px; width:auto; object-fit:contain; display:block;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,.35));
+  }
+
+  /* Carousel Card (glass) */
+  .card{
+    width:min(94vw, 720px);
+    aspect-ratio: 9/13;
+    position:relative;
+    border-radius: var(--round);
+    background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+    border:1px solid rgba(255,255,255,.12);
+    box-shadow:
+      0 10px 40px rgba(0,0,0,.45),
+      inset 0 0 0 1px rgba(255,255,255,.04);
+    overflow:hidden;
+    transform-style:preserve-3d;
+  }
+
+  /* Parallax layers */
+  .bg-gradient{
+    position:absolute; inset:0; z-index:0;
+    background: radial-gradient(120% 90% at 50% 0%, rgba(255,255,255,.12) 0%, transparent 55%),
+                linear-gradient(180deg, rgba(255,255,255,.04), transparent 30% 70%, rgba(0,0,0,.2));
+  }
+  .glow{
+    position:absolute; inset:auto; bottom:-40%; left:-20%;
+    width:70%; height:70%;
+    background: radial-gradient(closest-side, rgba(248,86,6,.35), rgba(248,86,6,0));
+    filter: blur(20px); z-index:0; pointer-events:none;
+  }
+
+  /* Track + Slide */
+  .carousel{
+    position:absolute; inset:0; z-index:1;
+  }
+  .track{
+    display:flex; height:100%; transition: transform .6s cubic-bezier(.22,.61,.36,1);
+    will-change:transform;
+  }
+  .slide{
+    position:relative; flex:0 0 100%; height:100%;
+    overflow:hidden;
+  }
+  .layer{
+    position:absolute; inset:0; background-size:cover; background-position:center; will-change:transform;
+  }
+  .layer.mid{ transform:translateZ(5px); }
+  .layer.fg{ transform:translateZ(15px) scale(1.02); }
+
+  /* Caption panel */
+  .caption{
+    position:absolute; left:14px; right:14px; bottom:14px;
+    padding:12px 12px;
+    border-radius:16px;
+    background: var(--glass);
+    backdrop-filter: blur(10px);
+    border:1px solid rgba(255,255,255,.18);
+    display:grid; gap:6px;
+  }
+  .caption h3{ font-size:1.05rem; line-height:1.15; }
+  .meta{ display:flex; align-items:center; gap:10px; opacity:.9; font-size:.86rem; }
+  .stars{ letter-spacing:1px }
+  .price{ margin-left:auto; font-weight:800; background:rgba(0,0,0,.35); padding:6px 10px; border-radius:999px }
+
+  /* Progress (autoplay) */
+  .progress{
+    position:absolute; top:8px; left:12px; right:12px; display:grid; grid-auto-columns:1fr; grid-auto-flow:column; gap:6px; z-index:3;
+  }
+  .bar{
+    height:3px; background:rgba(255,255,255,.28); overflow:hidden; border-radius:999px;
+  }
+  .bar > i{
+    display:block; height:100%; width:0%;
+    background:linear-gradient(90deg, #fff, #FFE5D6);
+    transition:width 0s linear;
+  }
+
+  /* Controls */
+  .controls{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:space-between; z-index:4; pointer-events:none;
+  }
+  .nav-btn{
+    pointer-events:auto; border:0; background: var(--glass-strong); backdrop-filter: blur(6px);
+    width:46px; height:46px; border-radius:50%;
+    display:grid; place-items:center; cursor:pointer;
+    transition: transform .12s ease, background .2s ease, box-shadow .2s ease;
+    box-shadow: 0 10px 24px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.12);
+    margin:0 8px;
+  }
+  .nav-btn:active{ transform: scale(.96) }
+  .nav-btn svg{ width:22px; height:22px }
+
+  /* Thumbnails as dots */
+  .thumbs{
+    position:absolute; bottom:10px; left:50%; transform:translateX(-50%);
+    display:flex; gap:8px; z-index:4;
+  }
+  .thumb{
+    width:16px; height:16px; border-radius:4px; overflow:hidden; border:1px solid rgba(255,255,255,.45);
+    opacity:.6; cursor:pointer; transition:opacity .2s ease, transform .2s ease;
+    background:#000 center/cover no-repeat;
+  }
+  .thumb.active{ opacity:1; transform:scale(1.05); box-shadow:0 0 0 2px rgba(255,255,255,.25) }
+
+  /* Floating CTA */
+  .cta{
+    display:flex; gap:10px; align-items:center; justify-content:center; margin-top:auto; z-index:5;
+  }
+  .cta-btn{
+    position:relative;
+    border:0; cursor:pointer;
+    padding:13px 22px; border-radius:999px; font-weight:800; font-size:1.05rem; letter-spacing:.2px;
+    color:#fff; background:#000;
+    box-shadow: 0 12px 30px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.08) inset;
+    overflow:hidden;
+  }
+  .cta-btn:before{
+    content:""; position:absolute; left:-40%; top:-200%; width:80%; height:500%;
+    background: linear-gradient(180deg, rgba(255,255,255,.6), rgba(255,255,255,0) 60%);
+    transform: rotate(18deg); filter: blur(10px); opacity:.25; animation: sheen 2.8s infinite;
+  }
+  @keyframes sheen { 0%{ left:-40% } 60%{ left:130% } 100%{ left:130% } }
+
+  /* Tilt hint */
+  .tilt-hint{
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    font-size:.9rem; padding:6px 10px; border-radius:999px;
+    background:rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.15);
+    opacity:.0; pointer-events:none; transition:opacity .4s ease;
+  }
+
+  /* Accessibility/Reduced motion */
+  @media (prefers-reduced-motion: reduce){
+    .track{ transition:none }
+    .cta-btn:before{ display:none }
+  }
+  .stars {
+    display:flex;
+    gap:2px;
+    color:#FFD700;
+  }
+
+  .stars svg {
+    width:14px;
+    height:14px;
+  }
+
+</style>
+</head>
+<body>
+  <div class="ad-container" role="region" aria-label="Interactive Carousel Ad">
+    <div class="header">
+      <img src="https://i.postimg.cc/GmJpdZjn/logo.png" alt="Brand Logo" class="logo" loading="eager">
+    </div>
+
+    <div class="card" id="card" aria-roledescription="carousel" aria-label="Featured products" tabindex="0">
+      <div class="bg-gradient"></div>
+      <div class="glow"></div>
+
+      <!-- Progress bars -->
+      <div class="progress" id="progress"></div>
+
+      <!-- Carousel -->
+      <div class="carousel">
+        <div class="track" id="track">
+          <!-- Slide 1 -->
+          <section class="slide" data-caption="Tapal Danedar — Strong Taste">
+            <div class="layer bg" style="background-image:url('https://i.postimg.cc/jSr5Vsyd/1.jpg')"></div>
+            <div class="caption" aria-live="polite">
+              <h3>Stationery</h3>
+              <div class="meta">
+                <span class="stars">
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 .587l3.668 7.568L24 9.748l-6 5.82 1.417 8.265L12 19.771l-7.417 4.062L6 15.568 0 9.748l8.332-1.593z"/>
+                  </svg>
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 .587l3.668 7.568L24 9.748l-6 5.82 1.417 8.265L12 19.771l-7.417 4.062L6 15.568 0 9.748l8.332-1.593z"/>
+                  </svg>
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 .587l3.668 7.568L24 9.748l-6 5.82 1.417 8.265L12 19.771l-7.417 4.062L6 15.568 0 9.748l8.332-1.593z"/>
+                  </svg>
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 .587l3.668 7.568L24 9.748l-6 5.82 1.417 8.265L12 19.771l-7.417 4.062L6 15.568 0 9.748l8.332-1.593z"/>
+                  </svg>
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 .587l3.668 7.568L24 9.748l-6 5.82 1.417 8.265L12 19.771l-7.417 4.062L6 15.568 0 9.748l8.332-1.593z"/>
+                  </svg>
+                </span>
+                <span>4.9 (2.1k)</span>
+                <span class="price">₨ 699</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- Slide 2 -->
+          <section class="slide" data-caption="Family Pack — Value Bundle">
+            <div class="layer bg" style="background-image:url('https://i.postimg.cc/Bncv4dC0/2.jpg')"></div>
+            <div class="caption">
+              <h3>Men's shirts</h3>
+              <div class="meta">
+                <span class="stars">
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 .587l3.668 7.568L24 9.748l-6 5.82 1.417 8.265L12 19.771l-7.417 4.062L6 15.568 0 9.748l8.332-1.593z"/>
+                  </svg>
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 .587l3.668 7.568L24 9.748l-6 5.82 1.417 8.265L12 19.771l-7.417 4.062L6 15.568 0 9.748l8.332-1.593z"/>
+                  </svg>
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 .587l3.668 7.568L24 9.748l-6 5.82 1.417 8.265L12 19.771l-7.417 4.062L6 15.568 0 9.748l8.332-1.593z"/>
+                  </svg>
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 .587l3.668 7.568L24 9.748l-6 5.82 1.417 8.265L12 19.771l-7.417 4.062L6 15.568 0 9.748l8.332-1.593z"/>
+                  </svg>
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 .587l3.668 7.568L24 9.748l-6 5.82 1.417 8.265L12 19.771l-7.417 4.062L6 15.568 0 9.748l8.332-1.593z"/>
+                  </svg>
+                </span>
+                <span>4.6 (1.3k)</span>
+                <span class="price">₨ 1,299</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- Slide 3 -->
+          <section class="slide" data-caption="Chai Time Essentials">
+            <div class="layer bg" style="background-image:url('https://i.postimg.cc/MpbGqhY8/3.jpg')"></div>
+            <div class="caption">
+              <h3>Watches</h3>
+              <div class="meta">
+                <span class="stars">
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 .587l3.668 7.568L24 9.748l-6 5.82 1.417 8.265L12 19.771l-7.417 4.062L6 15.568 0 9.748l8.332-1.593z"/>
+                  </svg>
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 .587l3.668 7.568L24 9.748l-6 5.82 1.417 8.265L12 19.771l-7.417 4.062L6 15.568 0 9.748l8.332-1.593z"/>
+                  </svg>
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 .587l3.668 7.568L24 9.748l-6 5.82 1.417 8.265L12 19.771l-7.417 4.062L6 15.568 0 9.748l8.332-1.593z"/>
+                  </svg>
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 .587l3.668 7.568L24 9.748l-6 5.82 1.417 8.265L12 19.771l-7.417 4.062L6 15.568 0 9.748l8.332-1.593z"/>
+                  </svg>
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 .587l3.668 7.568L24 9.748l-6 5.82 1.417 8.265L12 19.771l-7.417 4.062L6 15.568 0 9.748l8.332-1.593z"/>
+                  </svg>
+                </span>
+                <span>4.8 (980)</span>
+                <span class="price">₨ 1,899</span>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="controls">
+        <button class="nav-btn" id="prev" aria-label="Previous">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M15 6L9 12L15 18" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+        <button class="nav-btn" id="next" aria-label="Next">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M9 6L15 12L9 18" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+
+      <!-- Thumbnails -->
+      <div class="thumbs" id="thumbs" aria-hidden="false"></div>
+
+      <div class="tilt-hint" id="tiltHint">Tilt / drag to explore</div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta">
+      <button class="cta-btn" id="cta">Shop Now</button>
+    </div>
+  </div>
+
+<script>
+  // ===== CONFIG =====
+  const AUTOPLAY_MS = 3500;
+  const SLIDES = Array.from(document.querySelectorAll('.slide'));
+  const track = document.getElementById('track');
+  const card = document.getElementById('card');
+  const progressWrap = document.getElementById('progress');
+  const thumbsWrap = document.getElementById('thumbs');
+  const tiltHint = document.getElementById('tiltHint');
+  const btnPrev = document.getElementById('prev');
+  const btnNext = document.getElementById('next');
+  const cta = document.getElementById('cta');
+
+  let index = 0;
+  let autoplayTimer = null;
+  let isHover = false;
+  let isPointerDown = false;
+  let startX = 0;
+  let currentTranslate = 0;
+  let lastMoveTime = 0;
+
+  // Build progress bars + thumbs
+  SLIDES.forEach((s, i)=>{
+    const bar = document.createElement('div');
+    bar.className = 'bar';
+    bar.innerHTML = '<i></i>';
+    progressWrap.appendChild(bar);
+
+    const thumb = document.createElement('button');
+    thumb.className = 'thumb';
+    thumb.style.backgroundImage = `url(assets/${i+1}.jpg)`;
+    thumb.setAttribute('aria-label', `Go to slide ${i+1}`);
+    thumb.addEventListener('click', ()=>goTo(i, true));
+    thumbsWrap.appendChild(thumb);
+  });
+
+  function updateUI(){
+    track.style.transform = `translateX(-${index*100}%)`;
+    document.querySelectorAll('.thumb').forEach((t,i)=>t.classList.toggle('active', i===index));
+    document.querySelectorAll('.bar i').forEach((el,i)=>{
+      el.style.transition = 'none';
+      el.style.width = i < index ? '100%' : (i===index ? '0%' : '0%');
+    });
+    // restart active progress
+    requestAnimationFrame(()=>{
+      requestAnimationFrame(()=>{
+        const active = document.querySelectorAll('.bar i')[index];
+        if(active){
+          active.style.transition = `width ${AUTOPLAY_MS}ms linear`;
+          active.style.width = '100%';
+        }
+      });
+    });
+  }
+
+  function goTo(i, userInitiated=false){
+    index = (i + SLIDES.length) % SLIDES.length;
+    updateUI();
+    if(userInitiated) restartAutoplay();
+  }
+
+  function next(){ goTo(index+1); }
+  function prev(){ goTo(index-1); }
+
+  function startAutoplay(){
+    stopAutoplay();
+    autoplayTimer = setInterval(()=>{ if(!isHover && !isPointerDown) next(); }, AUTOPLAY_MS);
+    // kick progress width
+    updateUI();
+  }
+  function stopAutoplay(){ if(autoplayTimer){ clearInterval(autoplayTimer); autoplayTimer=null; } }
+  function restartAutoplay(){ startAutoplay(); }
+
+  // Mouse hover pause
+  card.addEventListener('mouseenter', ()=>{ isHover=true; stopAutoplay(); });
+  card.addEventListener('mouseleave', ()=>{ isHover=false; startAutoplay(); });
+
+  // Buttons
+  btnNext.addEventListener('click', ()=>goTo(index+1, true));
+  btnPrev.addEventListener('click', ()=>goTo(index-1, true));
+
+  // Keyboard
+  card.addEventListener('keydown', (e)=>{
+    if(e.key==='ArrowRight') { goTo(index+1, true); }
+    if(e.key==='ArrowLeft')  { goTo(index-1, true); }
+  });
+
+  // Swipe/drag
+  function onPointerDown(e){
+    isPointerDown = true; stopAutoplay();
+    startX = (e.touches ? e.touches[0].clientX : e.clientX);
+    currentTranslate = -index * card.clientWidth;
+    track.style.transition='none';
+    tiltHint.style.opacity='0';
+  }
+  function onPointerMove(e){
+    if(!isPointerDown) return;
+    const x = (e.touches ? e.touches[0].clientX : e.clientX);
+    const dx = x - startX;
+    track.style.transform = `translateX(${currentTranslate + dx}px)`;
+    lastMoveTime = performance.now();
+  }
+  function onPointerUp(e){
+    if(!isPointerDown) return;
+    isPointerDown=false;
+    track.style.transition='';
+    const endX = (e.changedTouches ? e.changedTouches[0].clientX : e.clientX);
+    const dx = endX - startX;
+    const threshold = card.clientWidth * 0.18;
+    if(Math.abs(dx) > threshold){ dx<0 ? next() : prev(); }
+    else { goTo(index); }
+    startAutoplay();
+  }
+  card.addEventListener('mousedown', onPointerDown);
+  window.addEventListener('mousemove', onPointerMove);
+  window.addEventListener('mouseup', onPointerUp);
+  card.addEventListener('touchstart', onPointerDown, {passive:true});
+  card.addEventListener('touchmove', onPointerMove, {passive:true});
+  card.addEventListener('touchend', onPointerUp);
+
+  // 3D Tilt + Parallax
+  const layers = document.querySelectorAll('.layer');
+  function tilt(e){
+    const rect = card.getBoundingClientRect();
+    const cx = rect.left + rect.width/2;
+    const cy = rect.top + rect.height/2;
+    const x = (e.touches ? e.touches[0].clientX : e.clientX);
+    const y = (e.touches ? e.touches[0].clientY : e.clientY);
+    const dx = (x - cx) / (rect.width/2);
+    const dy = (y - cy) / (rect.height/2);
+    card.style.transform = `perspective(900px) rotateY(${dx*4}deg) rotateX(${dy*-3}deg)`;
+    layers.forEach((layer, i)=>{
+      const depth = (i%3===0)? 8 : (i%3===1? 14 : 20);
+      layer.style.transform = `translate(${dx*depth}px, ${dy*depth}px) scale(1.02)`;
+    });
+  }
+  function resetTilt(){
+    card.style.transform = 'perspective(900px) rotateY(0deg) rotateX(0deg)';
+    layers.forEach(layer=> layer.style.transform = 'translate(0,0) scale(1.0)');
+  }
+  card.addEventListener('mousemove', tilt);
+  card.addEventListener('mouseleave', resetTilt);
+  card.addEventListener('touchmove', tilt, {passive:true});
+  card.addEventListener('touchend', resetTilt);
+
+  // Hint fade-in once
+  setTimeout(()=> tiltHint.style.opacity='.95', 800);
+  setTimeout(()=> tiltHint.style.opacity='0', 3200);
+
+  // CTA
+  cta.addEventListener('click', ()=> window.open('https://www.tapaltea.com/', '_blank'));
+
+  // Init
+  goTo(0);
+  startAutoplay();
+</script>
+</body>
+</html>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="ad.size" content="width=320,height=480">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3DCube Ad</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #000; /* full black background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .ad-wrapper {
+            width: 320px;
+            height: 480px;
+            background: url('https://i.postimg.cc/bN8zZrCP/background.jpg') no-repeat center/cover;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            position: relative;
+        }
+
+        .scene {
+            width: 150px;
+            height: 150px;
+            perspective: 1000px;
+            position: absolute;
+            top: 45%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .cube {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transform: rotateX(0deg) rotateY(0deg);
+            transition: transform 0.1s ease-out;
+        }
+
+        .face {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            background: #ddd;
+            border: 1px solid rgb(0, 0, 0);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .face img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .front  { transform: rotateY(  0deg) translateZ(76px); }
+        .back   { transform: rotateY(180deg) translateZ(76px); }
+        .left   { transform: rotateY(-90deg) translateZ(76px); }
+        .right  { transform: rotateY( 90deg) translateZ(76px); }
+        .top    { transform: rotateX( 90deg) translateZ(76px); }
+        .bottom { transform: rotateX(-90deg) translateZ(76px); }
+
+        .cta-button {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            cursor: pointer;
+            z-index: 9999;
+            pointer-events: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="ad-wrapper">
+        <div class="scene">
+            <div class="cube" id="cube">
+                <div class="face front"><img src="https://i.postimg.cc/mknJLkR2/facefront.png" alt="Front"></div>
+                <div class="face back"><img src="https://i.postimg.cc/59KZq7vd/faceback.png" alt="Back"></div>
+                <div class="face left"><img src="https://i.postimg.cc/m2cKdYNc/faceleft.png" alt="Left"></div>
+                <div class="face right"><img src="https://i.postimg.cc/NfWSZKpd/faceright.png" alt="Right"></div>
+                <div class="face top"><img src="https://i.postimg.cc/sxxbCSkN/facebottom.png" alt="Top"></div>
+                <div class="face bottom"><img src="https://i.postimg.cc/sxxbCSkN/facebottom.png" alt="Bottom"></div>
+            </div>
+        </div>
+        <a href="#" class="cta-button" onclick="window.location.href='https://meethappyads.com/';">
+            <img src="https://i.postimg.cc/sXwbLKNW/button.png" alt="Explore More">
+        </a>
+    </div>
+
+    <script>
+        let cube = document.getElementById("cube");
+        let xAngle = 0, yAngle = 0;
+        let startX, startY, isDragging = false;
+
+        document.querySelectorAll("img").forEach(img => {
+            img.ondragstart = () => false;
+        });
+
+        document.querySelector('.cta-button').addEventListener('touchstart', function(event) {
+            window.open('https://meethappyads.com/', '_blank');
+        });
+
+        document.addEventListener("mousedown", (e) => {
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+        });
+
+        document.addEventListener("mousemove", (e) => {
+            if (!isDragging) return;
+            let deltaX = e.clientX - startX;
+            let deltaY = e.clientY - startY;
+            yAngle += deltaX * 0.5;
+            xAngle -= deltaY * 0.5;
+            cube.style.transform = `rotateX(${xAngle}deg) rotateY(${yAngle}deg)`;
+            startX = e.clientX;
+            startY = e.clientY;
+        });
+
+        document.addEventListener("mouseup", () => {
+            isDragging = false;
+        });
+
+        document.addEventListener("touchstart", (e) => {
+            isDragging = true;
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+            e.preventDefault();
+        }, { passive: false });
+
+        document.addEventListener("touchmove", (e) => {
+            if (!isDragging) return;
+            let deltaX = e.touches[0].clientX - startX;
+            let deltaY = e.touches[0].clientY - startY;
+            yAngle += deltaX * 0.5;
+            xAngle -= deltaY * 0.5;
+            cube.style.transform = `rotateX(${xAngle}deg) rotateY(${yAngle}deg)`;
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        }, { passive: false });
+
+        document.addEventListener("touchend", () => {
+            isDragging = false;
+        });
+    </script>
+</body>
+</html>

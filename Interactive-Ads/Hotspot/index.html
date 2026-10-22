@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="ad.size" content="width=320,height=480">
+  <title>Hotspot</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      width: 100%;
+      height: 100%;
+    }
+
+    .screen {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-image: url('https://i.postimg.cc/x1V4W1vn/b.jpg');
+      background-size: cover;
+      background-position: center;
+    }
+
+    .wrapper-container {
+      position: relative;
+      width: 90%;
+      max-width: 640px;
+      height: 90%;
+      max-height: 854px;
+    }
+
+    .hotspot {
+      position: absolute;
+      width: 5vw;
+      height: 5vw;
+      max-width: 40px;
+      max-height: 40px;
+      background-color: white;
+      border-radius: 50%;
+      cursor: pointer;
+      background-size: cover;
+      transform: translate(-50%, -50%);
+    }
+
+    .hotspot[data-hotspot="1"] { top: 25%; left: 33%; }
+    .hotspot[data-hotspot="2"] { top: 60%; left: 26%; }
+    .hotspot[data-hotspot="3"] { top: 59%; left: 95%; }
+    .hotspot[data-hotspot="4"] { top: 63%; left: 74%; }
+
+    @media (max-width: 600px) {
+      .hotspot[data-hotspot="1"] { top: 33%; left: 32%; }
+      .hotspot[data-hotspot="2"] { top: 60%; left: 26%; }
+      .hotspot[data-hotspot="3"] { top: 59%; left: 95%; }
+      .hotspot[data-hotspot="4"] { top: 63%; left: 74%; }
+    }
+
+    #bottom-button {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 40vw;
+      max-width: 400px;
+      height: auto;
+      z-index: 100; /* Below point-image (999) */
+    }
+
+    #top-logo {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 16vw;
+      max-width: 150px;
+      height: auto;
+      z-index: 200;
+    }
+
+    #intro-text {
+      position: fixed;
+      top: 25%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: sans-serif;
+      font-size: 12px;
+      color: white;
+      background-color: rgba(0,0,0,0.6);
+      padding: 16px 12px;
+      border-radius: 10px;
+      z-index: 1000;
+      animation: fadeOut 1s ease-in-out 4s forwards;
+    }
+
+    @keyframes fadeOut {
+      to {
+        opacity: 0;
+        visibility: hidden;
+      }
+    }
+
+    #point-image {
+      display: none;
+      position: fixed;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 95vw;
+      max-width: 350px;
+      height: auto;
+      z-index: 999;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      border-radius: 10px;
+      background: white;
+    }
+  </style>
+</head>
+<body>
+  <div id="screen1" class="screen">
+    <div class="wrapper-container">
+      <div class="hotspot" data-hotspot="1" style="background-image: url('https://i.postimg.cc/cJXkg7VL/hotspotbutton.png');" data-image="https://i.postimg.cc/63qjd2XL/point1.jpg" onclick="showPointImage(this)"></div>
+      <div class="hotspot" data-hotspot="2" style="background-image: url('https://i.postimg.cc/cJXkg7VL/hotspotbutton.png');" data-image="https://i.postimg.cc/LXWyv94d/point2.jpg" onclick="showPointImage(this)"></div>
+      <div class="hotspot" data-hotspot="3" style="background-image: url('https://i.postimg.cc/cJXkg7VL/hotspotbutton.png');" data-image="https://i.postimg.cc/1XNvjk48/point3.jpg" onclick="showPointImage(this)"></div>
+      <div class="hotspot" data-hotspot="4" style="background-image: url('https://i.postimg.cc/cJXkg7VL/hotspotbutton.png');" data-image="https://i.postimg.cc/fkn8n80B/point4.jpg" onclick="showPointImage(this)"></div>
+      <img id="point-image" src="" alt="Point Image" onclick="hidePointImage()" />
+    </div>
+  </div>
+
+  <!-- Bottom Button Image (Behind the point image) -->
+  <div id="intro-text">Tap Around to Explore</div>
+
+  <img id="top-logo" src="https://i.postimg.cc/d0qSVNNf/logo.png" alt="Logo" />
+
+  <a href="www.happyads.com" target="_blank">
+    <img id="bottom-button" src="https://i.postimg.cc/2jsbv1RQ/btn.png" alt="cta-button">
+  </a>
+
+  <script>
+    let lastHotspot = null;
+
+    function showPointImage(hotspot) {
+      const pointImage = document.getElementById('point-image');
+      const imageSrc = hotspot.getAttribute('data-image');
+
+      if (lastHotspot === hotspot) {
+        pointImage.style.display = 'none';
+        lastHotspot = null;
+        return;
+      }
+
+      pointImage.src = imageSrc;
+      pointImage.style.display = 'block';
+      lastHotspot = hotspot;
+    }
+
+    function hidePointImage() {
+      const pointImage = document.getElementById('point-image');
+      pointImage.style.display = 'none';
+      lastHotspot = null;
+    }
+  </script>
+</body>
+</html>

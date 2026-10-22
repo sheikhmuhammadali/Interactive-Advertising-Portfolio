@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Sooper Puzzle Ad</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red: #D1181F;
+      --red-dark: #9e1115;
+      --gold: #FFD700;
+      --gold-dark: #e5b800;
+      --cream: #FFF8EE;
+      --brown: #5C2D0A;
+      --white: #ffffff;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Poppins', sans-serif;
+      background: #111;
+    }
+
+    #ad-wrap {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      max-width: 430px;
+      margin: 0 auto;
+      overflow: hidden;
+      background: var(--cream);
+    }
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+    }
+    .screen.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    #startScreen { background: var(--red); }
+
+    .logo-slot {
+      position: absolute;
+      top: 0%;
+      left: 4%;
+      transform: none;
+      z-index: 10;
+      width: 30%;
+      max-width: 100px;
+    }
+    .logo-slot img {
+      width: 100%;
+      border-radius: 12px;
+      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4));
+    }
+
+    .start-bg {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      inset: 0;
+      background-image: url('https://i.postimg.cc/0Q57kGhQ/START-BG-IMAGE.jpg');
+      background-size: cover;
+      background-position: center;
+    }
+
+    .start-cta-area {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 18px 24px 28px;
+      background: linear-gradient(to top, rgba(0,0,0,0.72) 0%, transparent 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      z-index: 5;
+    }
+
+    .start-tagline {
+      font-family: 'Poppins', sans-serif;
+      font-size: clamp(42px, 11vw, 56px);
+      font-weight: 800;
+      color: #ffffff;
+      text-shadow: 0 3px 12px rgba(0,0,0,0.3);
+      text-align: center;
+      line-height: 0.9;
+      letter-spacing: -1px;
+      text-transform: uppercase;
+      width: 100%;
+    }
+    .start-sub {
+      font-family: 'Poppins', sans-serif;
+      font-size: clamp(11px, 3vw, 14px);
+      color: rgba(255,255,255,0.90);
+      text-align: center;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      width: 100%;
+      line-height: 1.2;
+      margin-bottom: 40px;
+    }
+
+    .cta-img-btn {
+      width: 80%;
+      max-width: 300px;
+      cursor: pointer;
+      border: none;
+      background: none;
+      padding: 0;
+      transition: transform 0.2s ease;
+    }
+    .cta-img-btn img {
+      width: 100%;
+      border-radius: 14px;
+      filter: drop-shadow(0 4px 16px rgba(0,0,0,0.5));
+    }
+    .cta-img-btn:active { transform: scale(0.96); }
+
+    /* ══ GAME SCREEN ══ */
+    #gameScreen {
+      background: var(--cream);
+      justify-content: space-between;
+      padding: 0;
+    }
+
+    .game-header {
+      width: 100%;
+      background: var(--red);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0px 14px 2px;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.2);
+    }
+    .game-logo {
+      height: 80px;
+      object-fit: contain;
+    }
+
+    /* ── EDIT 1: Pills wrapper so timer + tries sit side by side ── */
+    .header-pills {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .timer-pill {
+      background: var(--gold);
+      color: var(--brown);
+      font-family: 'Poppins', sans-serif;
+      font-weight: 800;
+      font-size: clamp(14px, 4vw, 17px);
+      padding: 6px 16px;
+      border-radius: 50px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .timer-pill.urgent {
+      background: var(--white);
+      color: var(--red);
+      animation: urgentPulse 0.5s ease infinite alternate;
+    }
+    @keyframes urgentPulse {
+      from { transform: scale(1); }
+      to { transform: scale(1.06); }
+    }
+
+    /* ── EDIT 1: Tries pill — same style as timer ── */
+    .tries-pill {
+      background: var(--white);
+      color: var(--red);
+      font-family: 'Poppins', sans-serif;
+      font-weight: 800;
+      font-size: clamp(14px, 4vw, 17px);
+      padding: 6px 16px;
+      border-radius: 50px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .game-instruction {
+      font-size: clamp(12px, 3.4vw, 14px);
+      color: var(--brown);
+      font-weight: 700;
+      text-align: center;
+      padding: 10px 16px 6px;
+      opacity: 0.75;
+    }
+
+    .puzzle-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 0 16px;
+    }
+
+    #puzzleGrid {
+      width: min(88vw, 380px);
+      height: min(88vw, 380px);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      border-radius: 14px;
+      overflow: hidden;
+      border: 3px solid var(--gold);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+      position: relative;
+    }
+
+    .tile {
+      width: 100%;
+      height: 100%;
+      background-image: url('PUZZLE_IMAGE_URL_HERE');
+      background-size: 300% 300%;
+      cursor: pointer;
+      border: 1.5px solid rgba(255,255,255,0.4);
+      transition: filter 0.15s ease, transform 0.15s ease;
+      position: relative;
+    }
+    .tile.selected {
+      filter: brightness(1.15) saturate(1.3);
+      transform: scale(0.95);
+      border-color: var(--gold) !important;
+      z-index: 2;
+      box-shadow: inset 0 0 0 3px var(--gold);
+    }
+
+    #completeOverlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0.96);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+      border-radius: 11px;
+      gap: 8px;
+    }
+    #completeOverlay.show { display: flex; }
+    .overlay-emoji { font-size: 44px; animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+    .overlay-text {
+      font-family: 'Poppins', sans-serif;
+      font-size: clamp(16px, 4.5vw, 20px);
+      font-weight: 800;
+      color: var(--red);
+      text-align: center;
+      padding: 0 14px;
+    }
+    @keyframes popIn {
+      from { transform: scale(0); }
+      to { transform: scale(1); }
+    }
+
+    .game-bottom {
+      width: 100%;
+      padding: 12px 18px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      background: var(--white);
+      border-top: 2px solid rgba(0,0,0,0.07);
+    }
+
+    /* ══ END SCREEN ══ */
+    #endScreen { background: var(--red); }
+
+    .end-bg {
+      position: absolute;
+      inset: 0;
+      background-image: url('https://i.postimg.cc/V6sXf92f/END-BG-IMAGE.png');
+      background-size: cover;
+      background-position: center;
+    }
+
+    .end-content {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 0 24px 36px;
+      z-index: 5;
+    }
+
+    /* ── EDIT 3: Tries result badge on end screen ── */
+    .end-tries-badge {
+      background: rgba(255,255,255,0.15);
+      border: 1.5px solid rgba(255,255,255,0.4);
+      color: #ffffff;
+      font-family: 'Poppins', sans-serif;
+      font-size: clamp(12px, 3.2vw, 15px);
+      font-weight: 700;
+      border-radius: 50px;
+      padding: 8px 22px;
+      margin-bottom: 16px;
+      text-align: center;
+      letter-spacing: 0.5px;
+      display: none; /* shown by JS only on win */
+    }
+    .end-tries-badge.show { display: block; }
+    .end-tries-badge span {
+      color: var(--gold);
+      font-weight: 900;
+    }
+
+    .end-replay {
+      margin-top: 12px;
+      background: transparent;
+      color: rgba(255,255,255,0.7);
+      border: 1.5px solid rgba(255,255,255,0.4);
+      font-family: 'Poppins', sans-serif;
+      font-size: clamp(12px, 3vw, 14px);
+      font-weight: 700;
+      border-radius: 50px;
+      padding: 10px 28px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .end-replay:hover { background: rgba(255,255,255,0.1); }
+
+    .confetti-piece {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      animation: confettiFall linear forwards;
+      z-index: 30;
+      pointer-events: none;
+    }
+    @keyframes confettiFall {
+      0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+<div id="ad-wrap">
+
+  <!-- ════ START SCREEN ════ -->
+  <div id="startScreen" class="screen active">
+    <div class="start-bg" id="startBg"></div>
+    <div class="logo-slot">
+      <img src="https://i.postimg.cc/d0j8cNNQ/logo.png" alt="Sooper Logo">
+    </div>
+    <div class="start-cta-area">
+      <div class="start-tagline">Crack The<br>Sooper Treat!</div>
+      <div class="start-sub">Solve the puzzle & win a<br>delicious surprise</div>
+      <button class="cta-img-btn" onclick="goToGame()">
+        <img src="https://i.postimg.cc/7Lngrtt8/CTA.png">
+      </button>
+    </div>
+  </div>
+
+  <!-- ════ GAME SCREEN ════ -->
+  <div id="gameScreen" class="screen">
+    <div class="game-header">
+      <img class="game-logo" src="https://i.postimg.cc/d0j8cNNQ/logo.png" alt="Sooper">
+
+      <!-- EDIT 2: Wrapped both pills in .header-pills, added tries pill -->
+      <div class="header-pills">
+        <div class="timer-pill" id="timerPill">
+          ⏳ <span id="countdown">30</span>sec
+        </div>
+        <div class="tries-pill" id="triesPill">
+          🔄 <span id="triesCount">0</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="game-instruction">Tap two tiles to swap them — solve the picture! 👆</div>
+
+    <div class="puzzle-wrap">
+      <div id="puzzleGrid">
+        <div id="completeOverlay">
+          <div class="overlay-emoji">🎉</div>
+          <div class="overlay-text">You cracked the<br>Sooper treat!</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="game-bottom">
+      <button class="cta-img-btn" onclick="restartGame()">
+        <img src="https://i.postimg.cc/2574N99q/SHUFFLE-RESTART-BTN.png" alt="Restart">
+      </button>
+    </div>
+  </div>
+
+  <!-- ════ END SCREEN ════ -->
+  <div id="endScreen" class="screen">
+    <div class="end-bg"></div>
+    <div class="end-content">
+
+      <!-- EDIT 3: Tries result badge — only visible on win -->
+      <div class="end-tries-badge" id="endTriesBadge">
+        Solved in <span id="endTriesNum">0</span> swaps 🎯
+      </div>
+
+      <button class="cta-img-btn" onclick="visitSite()">
+        <img src="https://i.postimg.cc/CKsjprrg/END-CTA.png" alt="Visit Sooper">
+      </button>
+      <button class="cta-img-btn" onclick="goToGame()">
+        <img src="https://i.postimg.cc/0N0p1XX2/PLAY-AGAIN-BTN.png" alt="Play Again">
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const PUZZLE_IMG = 'https://i.postimg.cc/Gpxknggb/bisc.png';
+  const TOTAL_TIME = 30;
+  const GRID = 3;
+
+  let timerInterval = null;
+  let secondsLeft = TOTAL_TIME;
+  let selectedTile = null;
+  let tileData = [];
+
+  // EDIT 3: swap counter variable
+  let swapCount = 0;
+
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  function goToGame() {
+    showScreen('gameScreen');
+    startGame();
+  }
+
+  function visitSite() {
+    window.open('https://www.sooper.pk', '_blank');
+  }
+
+  function restartGame() {
+    clearInterval(timerInterval);
+    startGame();
+  }
+
+  function rebuildTiles(correctPositions, initialPositions) {
+    const grid = document.getElementById('puzzleGrid');
+    const overlay = document.getElementById('completeOverlay');
+    grid.innerHTML = '';
+    grid.appendChild(overlay);
+    overlay.classList.remove('show');
+    selectedTile = null;
+    tileData = [];
+
+    const currentBgPositions = [...initialPositions];
+
+    for (let i = 0; i < GRID * GRID; i++) {
+      const tile = document.createElement('div');
+      tile.className = 'tile';
+      tile.style.backgroundImage = `url('${PUZZLE_IMG}')`;
+      tile.style.backgroundPosition = currentBgPositions[i];
+      tile.addEventListener('click', () => handleTileClick(tile, i, currentBgPositions, correctPositions));
+      grid.appendChild(tile);
+      tileData.push(tile);
+    }
+  }
+
+  function handleTileClick(tile, idx, currentBgPositions, correctPositions) {
+    if (document.getElementById('completeOverlay').classList.contains('show')) return;
+
+    if (!selectedTile) {
+      selectedTile = { tile, idx };
+      tile.classList.add('selected');
+    } else {
+      if (selectedTile.idx === idx) {
+        tile.classList.remove('selected');
+        selectedTile = null;
+        return;
+      }
+
+      const temp = currentBgPositions[selectedTile.idx];
+      currentBgPositions[selectedTile.idx] = currentBgPositions[idx];
+      currentBgPositions[idx] = temp;
+
+      selectedTile.tile.style.backgroundPosition = currentBgPositions[selectedTile.idx];
+      tile.style.backgroundPosition = currentBgPositions[idx];
+
+      selectedTile.tile.classList.remove('selected');
+      selectedTile = null;
+
+      // EDIT 3: increment swap counter on every swap
+      swapCount++;
+      document.getElementById('triesCount').textContent = swapCount;
+
+      checkWin(currentBgPositions, correctPositions);
+    }
+  }
+
+  function checkWin(currentBgPositions, correctPositions) {
+    const solved = currentBgPositions.every((pos, i) => pos === correctPositions[i]);
+    if (solved) {
+      clearInterval(timerInterval);
+      setTimeout(() => {
+        document.getElementById('completeOverlay').classList.add('show');
+        spawnConfetti();
+        setTimeout(() => {
+          // EDIT 3: show tries badge with final count on win only
+          const badge = document.getElementById('endTriesBadge');
+          document.getElementById('endTriesNum').textContent = swapCount;
+          badge.classList.add('show');
+          showScreen('endScreen');
+        }, 1800);
+      }, 300);
+    }
+  }
+
+  function startTimer() {
+    secondsLeft = TOTAL_TIME;
+    const el = document.getElementById('countdown');
+    const pill = document.getElementById('timerPill');
+    el.textContent = secondsLeft;
+    pill.classList.remove('urgent');
+    clearInterval(timerInterval);
+
+    timerInterval = setInterval(() => {
+      secondsLeft--;
+      el.textContent = secondsLeft;
+      if (secondsLeft <= 8) pill.classList.add('urgent');
+      if (secondsLeft <= 0) {
+        clearInterval(timerInterval);
+        // On timeout: hide badge (no win)
+        document.getElementById('endTriesBadge').classList.remove('show');
+        showScreen('endScreen');
+      }
+    }, 1000);
+  }
+
+  function buildTilesAndStart() {
+    const correctPositions = [];
+    for (let r = 0; r < GRID; r++) {
+      for (let c = 0; c < GRID; c++) {
+        correctPositions.push(`${c * 50}% ${r * 50}%`);
+      }
+    }
+
+    let shuffled;
+    do {
+      shuffled = [...correctPositions].sort(() => Math.random() - 0.5);
+    } while (isAlreadySolved(shuffled, correctPositions));
+
+    rebuildTiles(correctPositions, shuffled);
+    startTimer();
+
+    // EDIT 3: reset swap counter on every new game
+    swapCount = 0;
+    document.getElementById('triesCount').textContent = 0;
+    document.getElementById('endTriesBadge').classList.remove('show');
+  }
+
+  function startGame() { buildTilesAndStart(); }
+
+  function isAlreadySolved(arr, correct) {
+    return arr.every((v, i) => v === correct[i]);
+  }
+
+  function spawnConfetti() {
+    const colors = ['#FFD700','#D1181F','#ff6b6b','#fff','#ffa500','#4CAF50'];
+    const wrap = document.getElementById('ad-wrap');
+    for (let i = 0; i < 40; i++) {
+      const p = document.createElement('div');
+      p.className = 'confetti-piece';
+      p.style.left = Math.random() * 100 + '%';
+      p.style.top = '-10px';
+      p.style.background = colors[Math.floor(Math.random() * colors.length)];
+      p.style.animationDuration = (1.2 + Math.random() * 1.4) + 's';
+      p.style.animationDelay = (Math.random() * 0.6) + 's';
+      p.style.transform = `rotate(${Math.random()*360}deg)`;
+      wrap.appendChild(p);
+      setTimeout(() => p.remove(), 3000);
+    }
+  }
+
+  showScreen('startScreen');
+</script>
+</body>
+</html>

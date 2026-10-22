@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="ad.size" content="width=320,height=480">
+  <meta name="theme-color" content="#111111" />
+
+<title>Minihop</title>
+<style>
+    :root{
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --ink:#ffffff;
+      --muted:rgba(255,255,255,.72);
+      --panel:rgba(0,0,0,.36);
+      --line:rgba(255,255,255,.25);
+      --accent:#ffffff;
+    }
+
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#090909;font-family:Arial,Helvetica,sans-serif;color:var(--ink);touch-action:none}
+    button{font:inherit}
+
+    .ad{
+      position:relative;
+      width:100vw;
+      height:var(--app-height,100dvh);
+      min-height:100vh;
+      overflow:hidden;
+      background:#111;
+      isolation:isolate;
+    }
+
+    .screen{
+      position:absolute;
+      inset:0;
+      display:none;
+      overflow:hidden;
+    }
+    .screen.active{display:flex}
+
+    .screen-bg{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      z-index:-2;
+      pointer-events:none;
+    }
+
+    .cover,
+    .end{
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      padding:calc(28px + var(--safe-top)) 22px calc(28px + var(--safe-bottom));
+    }
+
+    .end-content{
+      width:min(100%,430px);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:18px;
+      z-index:2;
+    }
+
+    .brand-logo{
+      width:min(62vw,250px);
+      max-height:110px;
+      object-fit:contain;
+      display:block;
+    }
+
+    .button-placeholder{
+      border:1px solid rgba(255,255,255,.22);
+      background:rgba(255,255,255,.14);
+      color:#fff;
+      border-radius:999px;
+      min-height:56px;
+      padding:0 26px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:900;
+      letter-spacing:.06em;
+      cursor:pointer;
+      backdrop-filter:blur(10px);
+      user-select:none;
+    }
+
+    .button-placeholder:active{transform:scale(.98)}
+
+    /* COVER SCREEN */
+    .cover{
+      position:absolute;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:calc(18px + var(--safe-top)) 16px calc(18px + var(--safe-bottom));
+      text-align:center;
+    }
+
+    .cover.active{display:flex;}
+
+    .cover .screen-bg{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      object-position:center;
+      z-index:-2;
+    }
+
+    .cover-content{
+      position:relative;
+      width:min(78vw,335px);
+      aspect-ratio:.72;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      z-index:2;
+      transform:translateY(2%);
+    }
+
+    .cover-menu-box{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit:fill;
+      z-index:0;
+      pointer-events:none;
+    }
+
+    .cover-menu-content{
+      position:absolute;
+      inset:0;
+      z-index:1;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      padding:13% 10% 9%;
+      box-sizing:border-box;
+    }
+
+    .cover-logo{
+      width:98%;
+      height:auto;
+      object-fit:contain;
+      display:block;
+      flex-shrink:0;
+      margin:0 auto;
+    }
+
+    .cover-text{
+      width:100%;
+      margin-top:7%;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+    }
+
+    .cover-title{
+      margin:0;
+      font-family:'PressStart2P',monospace;
+      font-size:clamp(20px, 6vw, 28px);
+      font-weight:400;
+      line-height:1.25;
+      letter-spacing:-1px;
+      color:#ffffff;
+      text-transform:uppercase;
+      white-space:nowrap;
+      text-shadow:
+        0 3px 0 rgba(0,0,0,.65),
+        0 0 8px rgba(255,255,255,.10);
+    }
+
+    .cover-copy{
+      width:80%;
+      max-width:250px;
+      margin:9px auto 0;
+      font-family:Arial,Helvetica,sans-serif;
+      font-size:clamp(12px,2.9vw,13px);
+      font-weight:400;
+      line-height:1.25;
+      color:#fff;
+      text-align:center;
+      opacity:.92;
+    }
+
+    .cover-play-button{
+      margin-top:auto;
+      width:82%;
+      height:auto;
+      padding:0;
+      border:0;
+      background:transparent;
+      appearance:none;
+      -webkit-appearance:none;
+      cursor:pointer;
+      display:block;
+      line-height:0;
+      flex-shrink:0;
+      touch-action:manipulation;
+    }
+
+    .cover-play-button img{
+      display:block;
+      width:100%;
+      height:auto;
+      object-fit:contain;
+      pointer-events:none;
+    }
+
+    .cover-play-button:active{transform:scale(.96)}
+
+    @media (max-height:560px){
+      .cover-content{width:min(70vw,285px);}
+      .cover-menu-content{padding-top:12%;padding-bottom:8%;}
+      .cover-text{margin-top:5%;}
+      .cover-copy{margin-top:6px;}
+    }
+
+    /* GAME */
+    #gameScreen{
+      align-items:center;
+      justify-content:center;
+      background:#111;
+    }
+
+    .game-shell{
+      position:relative;
+      width:100%;
+      height:100%;
+      max-width:540px;
+      margin:auto;
+      overflow:hidden;
+      background:#171717;
+      touch-action:none;
+    }
+
+    #game{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      display:block;
+      touch-action:none;
+    }
+
+    .hud{
+      position:absolute;
+      top:calc(14px + var(--safe-top));
+      left:14px;
+      right:14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      pointer-events:none;
+      z-index:4;
+    }
+
+    .score-chip{
+      position:relative;
+      min-width:120px;
+      min-height:48px;
+      display:flex;
+      align-items:center;
+      justify-content:flex-start;
+      padding:8px 16px 8px 48px;
+      font-size:14px;
+      font-weight:900;
+      letter-spacing:.06em;
+      isolation:isolate;
+    }
+    .score-chip-bg{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit:fill;
+      z-index:-1;
+      pointer-events:none;
+    }
+
+    .hud-logo{
+      width:124px;
+      height:64px;
+      object-fit:contain;
+      display:block;
+      flex-shrink:0;
+      margin-left:10px;
+      opacity:.95;
+    }
+
+    .countdown{
+      position:absolute;
+      left:50%;
+      top:42%;
+      transform:translate(-50%,-50%);
+      z-index:6;
+      font-family:'Courier New',monospace;
+      font-size:clamp(54px,16vw,86px);
+      font-weight:900;
+      color:#fff;
+      text-shadow:0 4px 0 rgba(0,0,0,.65),0 0 12px rgba(255,255,255,.15);
+      pointer-events:none;
+    }
+
+    .instructions{
+      position:absolute;
+      left:50%;
+      top:54%;
+      transform:translateX(-50%);
+      width:max-content;
+      max-width:86%;
+      padding:8px 12px;
+      border-radius:12px;
+      background:rgba(0,0,0,.42);
+      color:rgba(255,255,255,.95);
+      font-size:12px;
+      font-weight:700;
+      text-align:center;
+      pointer-events:none;
+      transition:opacity .35s ease;
+      z-index:6;
+    }
+
+    .controls{
+      position:absolute;
+      left:0;
+      right:0;
+      bottom:calc(128px + var(--safe-bottom));
+      display:flex;
+      justify-content:space-between;
+      padding:0 18px;
+      z-index:5;
+      pointer-events:none;
+    }
+    .control{
+      pointer-events:auto;
+      opacity:.45;
+      width:98px;
+      height:68px;
+      border:0;
+      padding:0;
+      background:transparent;
+      display:grid;
+      place-items:center;
+      user-select:none;
+      touch-action:none;
+    }
+    .control img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      pointer-events:none;
+    }
+    .control:active{transform:scale(.94)}
+    /* =========================================================
+       END / FINAL CTA SCREEN
+       ========================================================= */
+    .end{
+      position:absolute;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:calc(18px + var(--safe-top)) 16px calc(18px + var(--safe-bottom));
+      text-align:center;
+    }
+
+    .end.active{display:flex;}
+
+    .end .screen-bg{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      object-position:center;
+      z-index:-2;
+      pointer-events:none;
+    }
+
+    .end-content{
+      position:relative;
+      width:min(74vw,300px);
+      aspect-ratio:.82;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      z-index:2;
+      transform:translateY(10%);
+    }
+
+    .end-menu-box{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit:fill;
+      z-index:0;
+      pointer-events:none;
+    }
+
+    .end-menu-content{
+      position:absolute;
+      inset:0;
+      z-index:1;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      padding:7% 8% 16%;
+      box-sizing:border-box;
+    }
+
+    .end-logo{
+      position:absolute;
+      top:-40%;
+      left:50%;
+      transform:translateX(-50%);
+      width:96%;
+      max-height:126px;
+      height:auto;
+      object-fit:contain;
+      display:block;
+      z-index:2;
+      pointer-events:none;
+    }
+
+    .end-text{
+      width:120%;
+      margin-top:12%;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:1px;
+    }
+
+    .end-title{
+      margin:0;
+      font-family:'Ithaca','Courier New',monospace;
+      font-size:clamp(48px,7vw,34px);
+      font-weight:900;
+      line-height:1;
+      letter-spacing:-1px;
+      color:#fff;
+      text-transform:uppercase;
+      white-space:nowrap;
+      text-shadow:0 3px 0 rgba(0,0,0,.65),0 0 8px rgba(255,255,255,.10);
+    }
+
+    .end-message-image{
+      display:block;
+      width:62%;
+      max-width:168px;
+      height:auto;
+      object-fit:contain;
+      margin:0 auto;
+      flex-shrink:0;
+      pointer-events:none;
+    }
+
+    .final-score{
+      margin:7px 0 0;
+      font-family:Arial,Helvetica,sans-serif;
+      font-size:clamp(9px,2.5vw,11px);
+      font-weight:500;
+      line-height:1.15;
+      color:#fff;
+      text-transform:uppercase;
+    }
+
+    .end-spacer{flex:1;}
+
+    .end-copy{
+      width:100%;
+      max-width:250px;
+      margin:0 auto 12px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      color:#fff;
+    }
+
+    .end-copy-title{
+      margin:0;
+      font-family:'Inter',Arial,Helvetica,sans-serif;
+      font-size:clamp(16px,3.25vw,15px);
+      font-weight:800;
+      font-style:italic;
+      line-height:1.05;
+      color:#fff;
+      white-space:nowrap;
+    }
+
+    .end-copy-subtitle{
+      margin:2px 0 0;
+      font-family:'Inter',Arial,Helvetica,sans-serif;
+      font-size:clamp(12px,2.25vw,10px);
+      font-weight:400;
+      line-height:1.08;
+      color:#fff;
+      white-space:nowrap;
+      opacity:.92;
+    }
+
+    .cta-stack{
+      width:80%;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      margin:0;
+    }
+
+    .cta-stack .image-button{
+      width:100%;
+      height:auto;
+      padding:0;
+      border:0;
+      background:transparent;
+      appearance:none;
+      -webkit-appearance:none;
+      cursor:pointer;
+      display:block;
+      line-height:0;
+      touch-action:manipulation;
+    }
+
+    .cta-stack .image-button img{
+      display:block;
+      width:100%;
+      height:auto;
+      object-fit:contain;
+      pointer-events:none;
+    }
+
+    .cta-stack .image-button:active{transform:scale(.96);}
+
+    @media (max-height:560px){
+      .end-content{
+        width:min(68vw,270px);
+        transform:translateY(10%);
+      }
+      .end-logo{
+        top:-29%;
+        width:92%;
+        max-height:106px;
+      }
+      .end-menu-content{padding:9% 10% 8%;}
+      .end-text{margin-top:2%;}
+      .end-message-image{width:60%;}
+      .final-score{margin-top:6px;}
+      .end-copy{margin-bottom:6px;}
+      .cta-stack{width:78%;}
+    }
+
+    @media (min-width:700px){
+      body{background:#1a1a1a}
+      .ad{
+        width:min(430px,100vw);
+        height:min(820px,var(--app-height,100dvh));
+        margin:auto;
+        top:50%;
+        transform:translateY(-50%);
+        border-radius:24px;
+        box-shadow:0 24px 80px rgba(0,0,0,.55);
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="ad" id="ad">
+<!-- 2) 30-SECOND PLAYABLE -->
+    <section class="screen active" id="gameScreen">
+      <div class="game-shell">
+        <canvas id="game" width="375" height="667"></canvas>
+
+        <div class="hud">
+          <div class="score-chip">
+            <img class="score-chip-bg" id="scoreBoxImg" alt="" aria-hidden="true">
+            <span>SCORE&nbsp; <span id="score">0</span></span>
+          </div>
+          <img class="hud-logo" id="hudLogo" alt="MiniHop">
+        </div>
+
+        <div class="countdown" id="countdown">3</div>
+        <div class="instructions" id="instructions">HOLD BUTTONS OR TOUCH LEFT / RIGHT SIDE</div>
+
+        <div class="controls">
+          <button class="control" id="leftBtn" aria-label="Move left"><img id="leftBtnImg" alt=""></button>
+          <button class="control" id="rightBtn" aria-label="Move right"><img id="rightBtnImg" alt=""></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3) FINAL CTA SCREEN -->
+    <section class="screen end" id="endScreen">
+      <img class="screen-bg" id="endBg" alt="" aria-hidden="true">
+
+      <div class="end-content">
+        <img class="end-menu-box" id="endMenuBox" alt="" aria-hidden="true">
+
+        <div class="end-menu-content">
+          <img class="end-logo" id="endLogo" alt="MiniHop">
+
+          <div class="end-text">
+            <img class="end-message-image" id="endMessageImage" alt="Nice Run">
+            <p class="final-score">YOUR SCORE: <span id="finalScore">0</span></p>
+          </div>
+
+          <div class="end-spacer"></div>
+
+          <div class="end-copy">
+            <p class="end-copy-title">WANNA HOP MORE?</p>
+            <p class="end-copy-subtitle">Get this game on</p>
+          </div>
+
+          <div class="cta-stack">
+            <button class="image-button" id="ctaPrimary" aria-label="Get it on Google Play">
+              <img id="ctaPrimaryImg" alt="Get it on Google Play">
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+<script>
+(() => {
+  const ASSETS = {
+    coverBg:       'https://i.postimg.cc/nLfXXJh0/Cover-BG.png',
+    menuBox:       'https://i.postimg.cc/y627PCMK/Menu-box.png',
+    gameBg:        'https://i.postimg.cc/9Q74XMCN/BG.png',
+    endBg:         'https://i.postimg.cc/nLfXXJh0/Cover-BG.png',
+    logo:          'https://i.postimg.cc/s2CMMrg8/Logo.png',
+    characterJump1: 'https://i.postimg.cc/wBY11pj2/jump.png',
+    characterJump2: 'https://i.postimg.cc/s2CMMrgc/jump-2.png',
+    characterFall1: 'https://i.postimg.cc/N0vKKcj7/fall.png',
+    characterFall2: 'https://i.postimg.cc/3wQkkTxj/fall-2.png',
+    platform:      'https://i.postimg.cc/N0vKKcjz/Platform.png',
+    scoreBox:      'https://i.postimg.cc/pdMmmHL3/Score-Box.png',
+    startButton:   'https://i.postimg.cc/Bvfjj0nk/Play-BTN.png',
+    leftButton:    'https://i.postimg.cc/R0xWWBZP/Left-Button.png',
+    rightButton:   'https://i.postimg.cc/PqnCCj5B/Right-Button.png',
+    ctaPrimary:    'https://i.postimg.cc/g0bxxW2H/CTA.png',
+    messageImage:   'https://i.postimg.cc/FFwhZXMX/Message-image.png',
+  };
+
+  const PLAY_DURATION = 10000; // 30 seconds, intentionally not displayed.
+const gameScreen = document.getElementById('gameScreen');
+  const endScreen = document.getElementById('endScreen');
+const scoreEl = document.getElementById('score');
+  const finalScoreEl = document.getElementById('finalScore');
+  const instructions = document.getElementById('instructions');
+  const countdownEl = document.getElementById('countdown');
+
+  const canvas = document.getElementById('game');
+  const context = canvas.getContext('2d');
+
+  // DOM image assets
+  document.getElementById('endMenuBox').src = ASSETS.menuBox;
+  document.getElementById('endBg').src = ASSETS.endBg;
+  document.getElementById('endLogo').src = ASSETS.logo;
+  document.getElementById('scoreBoxImg').src = ASSETS.scoreBox;
+  document.getElementById('hudLogo').src = ASSETS.logo;
+  document.getElementById('leftBtnImg').src = ASSETS.leftButton;
+  document.getElementById('rightBtnImg').src = ASSETS.rightButton;
+  document.getElementById('ctaPrimaryImg').src = ASSETS.ctaPrimary;
+  document.getElementById('endMessageImage').src = ASSETS.messageImage;
+
+  // Canvas image assets
+  const gameBgImage = new Image();
+  const platformImage = new Image();
+  const characterJump1Image = new Image();
+  const characterJump2Image = new Image();
+  const characterFall1Image = new Image();
+  const characterFall2Image = new Image();
+
+  // PERFORMANCE: tell the browser these are needed for the first playable frame.
+  [
+    gameBgImage,
+    platformImage,
+    characterJump1Image,
+    characterJump2Image,
+    characterFall1Image,
+    characterFall2Image
+  ].forEach(img => {
+    try{ img.fetchPriority = 'high'; }catch(err){}
+    img.decoding = 'async';
+  });
+
+  gameBgImage.src = ASSETS.gameBg;
+  platformImage.src = ASSETS.platform;
+  characterJump1Image.src = ASSETS.characterJump1;
+  characterJump2Image.src = ASSETS.characterJump2;
+  characterFall1Image.src = ASSETS.characterFall1;
+  characterFall2Image.src = ASSETS.characterFall2;
+
+  // GAME ASSET DISPLAY SIZE — adjust these if your PNG proportions differ.
+  const platformWidth = 70;
+  const platformHeight = 18;
+  const platformStart = canvas.height - 70;
+
+  const gravity = 0.34;
+  const drag = 0.28;
+  const moveSpeed = 4.1;
+  const bounceVelocity = -11.7;
+
+  const baseMinPlatformSpace = 38;
+  const baseMaxPlatformSpace = 62;
+
+  let minPlatformSpace = baseMinPlatformSpace;
+  let maxPlatformSpace = baseMaxPlatformSpace;
+
+  let platforms = [];
+  let doodle;
+  let playerDir = 0;
+  let facingDir = 1; // 1 = right, -1 = left
+  let keydown = false;
+  let prevDoodleY = 0;
+  let score = 0;
+  let running = false;
+  let gameStartTime = 0;
+  let rafId = null;
+  let nextPlatformId = 1;
+  let lastScoredPlatformId = null;
+  let countdownActive = false;
+  let countdownTimer = null;
+
+  function random(min,max){
+    return Math.random() * (max-min) + min;
+  }
+
+  function showScreen(screen){
+    [gameScreen, endScreen].forEach(s => s.classList.remove('active'));
+    screen.classList.add('active');
+  }
+
+  function createPlatform(x,y){
+    return {id: nextPlatformId++, x, y};
+  }
+
+  function resetGame(){
+    score = 0;
+    scoreEl.textContent = '0';
+    finalScoreEl.textContent = '0';
+
+    minPlatformSpace = baseMinPlatformSpace;
+    maxPlatformSpace = baseMaxPlatformSpace;
+    nextPlatformId = 1;
+    lastScoredPlatformId = null;
+
+    platforms = [
+      createPlatform(canvas.width/2 - platformWidth/2, platformStart)
+    ];
+
+    let y = platformStart;
+    while(y > -platformHeight){
+      y -= platformHeight + random(minPlatformSpace,maxPlatformSpace);
+      let x = random(22, canvas.width - 22 - platformWidth);
+      platforms.push(createPlatform(x,y));
+    }
+
+    doodle = {
+      // CHARACTER DISPLAY SIZE — adjust to match your character image.
+      width: 42,
+      height: 54,
+      x: canvas.width/2 - 21,
+      y: platformStart - 54,
+      dx: 0,
+      dy: bounceVelocity
+    };
+
+    prevDoodleY = doodle.y;
+    playerDir = 0;
+    facingDir = 1;
+    keydown = false;
+  }
+
+  function startGame(){
+    resetGame();
+    showScreen(gameScreen);
+
+    // Start the game immediately. Countdown/instructions sit on top.
+    running = true;
+    countdownActive = true;
+    gameStartTime = performance.now();
+
+    instructions.style.opacity = '1';
+    countdownEl.style.display = 'block';
+
+    let count = 3;
+    countdownEl.textContent = count;
+
+    // Game is already playable while countdown is visible.
+    rafId = requestAnimationFrame(loop);
+
+    countdownTimer = setInterval(() => {
+      count -= 1;
+
+      if(count > 0){
+        countdownEl.textContent = count;
+        return;
+      }
+
+      endCountdown();
+    }, 1000);
+  }
+
+  function endCountdown(){
+    if(!countdownActive) return;
+
+    countdownActive = false;
+
+    if(countdownTimer){
+      clearInterval(countdownTimer);
+      countdownTimer = null;
+    }
+
+    countdownEl.style.display = 'none';
+    instructions.style.opacity = '0';
+  }
+
+  function finishGame(){
+    if(!running) return;
+    endCountdown();
+    running = false;
+    if(rafId) cancelAnimationFrame(rafId);
+    finalScoreEl.textContent = score;
+    showScreen(endScreen);
+  }
+
+  function respawn(){
+    // Keep the ad playable for the full 30 seconds instead of ending on a miss.
+    doodle.x = canvas.width/2 - doodle.width/2;
+    doodle.y = platformStart - doodle.height;
+    doodle.dx = 0;
+    doodle.dy = bounceVelocity;
+    prevDoodleY = doodle.y;
+
+    // Guarantee a safe platform under the respawn.
+    platforms.push(createPlatform(
+      canvas.width/2 - platformWidth/2,
+      platformStart
+    ));
+  }
+
+  function updateScore(platform){
+    // One point per newly landed platform.
+    // Prevents repeated bouncing on the same platform from farming points.
+    if(platform.id !== lastScoredPlatformId){
+      score += 1;
+      lastScoredPlatformId = platform.id;
+      scoreEl.textContent = score;
+    }
+  }
+
+  function drawBackground(){
+    if(gameBgImage.complete && gameBgImage.naturalWidth){
+      // Cover-crop the background to the canvas without distortion.
+      const imgRatio = gameBgImage.naturalWidth / gameBgImage.naturalHeight;
+      const canvasRatio = canvas.width / canvas.height;
+      let sx = 0, sy = 0, sw = gameBgImage.naturalWidth, sh = gameBgImage.naturalHeight;
+
+      if(imgRatio > canvasRatio){
+        sw = gameBgImage.naturalHeight * canvasRatio;
+        sx = (gameBgImage.naturalWidth - sw) / 2;
+      }else{
+        sh = gameBgImage.naturalWidth / canvasRatio;
+        sy = (gameBgImage.naturalHeight - sh) / 2;
+      }
+
+      context.drawImage(gameBgImage, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+    }else{
+      context.fillStyle = '#111';
+      context.fillRect(0,0,canvas.width,canvas.height);
+    }
+  }
+
+  function drawPlatform(platform){
+    if(platformImage.complete && platformImage.naturalWidth){
+      context.drawImage(platformImage, platform.x, platform.y, platformWidth, platformHeight);
+    }else{
+      context.fillStyle = '#686868';
+      context.fillRect(platform.x,platform.y,platformWidth,platformHeight);
+    }
+  }
+
+  function drawCharacter(){
+    // 4-frame jump animation using the four player images.
+    // Upward movement uses jump/jump_2; downward movement uses fall/fall_2.
+    const frameSpeed = 90;
+    const frameToggle = Math.floor(performance.now() / frameSpeed) % 2;
+
+    let characterImage;
+    if(doodle.dy < 0){
+      characterImage = frameToggle === 0 ? characterJump1Image : characterJump2Image;
+    }else{
+      characterImage = frameToggle === 0 ? characterFall1Image : characterFall2Image;
+    }
+
+    if(characterImage.complete && characterImage.naturalWidth){
+      context.save();
+
+      // Keep the exact same player position and dimensions.
+      // Only mirror the sprite horizontally when facing left.
+      if(facingDir < 0){
+        context.translate(doodle.x + doodle.width, doodle.y);
+        context.scale(-1, 1);
+        context.drawImage(characterImage, 0, 0, doodle.width, doodle.height);
+      }else{
+        context.drawImage(characterImage, doodle.x, doodle.y, doodle.width, doodle.height);
+      }
+
+      context.restore();
+    }else{
+      context.fillStyle = '#bdbdbd';
+      context.fillRect(doodle.x,doodle.y,doodle.width,doodle.height);
+    }
+  }
+
+  function loop(now){
+    if(!running) return;
+
+    if(now - gameStartTime >= PLAY_DURATION){
+      finishGame();
+      return;
+    }
+
+    context.clearRect(0,0,canvas.width,canvas.height);
+    drawBackground();
+
+    doodle.dy += gravity;
+
+    if(doodle.y < canvas.height/2 && doodle.dy < 0){
+      const shift = -doodle.dy;
+      platforms.forEach(platform => platform.y += shift);
+
+      while(platforms[platforms.length-1].y > -platformHeight){
+        const last = platforms[platforms.length-1];
+        platforms.push(createPlatform(
+          random(22,canvas.width-22-platformWidth),
+          last.y-(platformHeight+random(minPlatformSpace,maxPlatformSpace))
+        ));
+        minPlatformSpace = Math.min(minPlatformSpace + .12, 55);
+        maxPlatformSpace = Math.min(maxPlatformSpace + .14, 82);
+      }
+    } else {
+      doodle.y += doodle.dy;
+    }
+
+    if(!keydown){
+      if(playerDir < 0){
+        doodle.dx += drag;
+        if(doodle.dx > 0){ doodle.dx = 0; playerDir = 0; }
+      }else if(playerDir > 0){
+        doodle.dx -= drag;
+        if(doodle.dx < 0){ doodle.dx = 0; playerDir = 0; }
+      }
+    }
+
+    doodle.x += doodle.dx;
+
+    if(doodle.x + doodle.width < 0){
+      doodle.x = canvas.width;
+    }else if(doodle.x > canvas.width){
+      doodle.x = -doodle.width;
+    }
+
+    platforms.forEach(platform => {
+      drawPlatform(platform);
+
+      if(
+        doodle.dy > 0 &&
+        prevDoodleY + doodle.height <= platform.y + 2 &&
+        doodle.x < platform.x + platformWidth &&
+        doodle.x + doodle.width > platform.x &&
+        doodle.y < platform.y + platformHeight &&
+        doodle.y + doodle.height > platform.y
+      ){
+        doodle.y = platform.y - doodle.height;
+        doodle.dy = bounceVelocity;
+        updateScore(platform);
+      }
+    });
+
+    drawCharacter();
+    prevDoodleY = doodle.y;
+
+    platforms = platforms.filter(platform => platform.y < canvas.height + 60);
+
+    if(doodle.y > canvas.height + 80){
+      respawn();
+    }
+
+    rafId = requestAnimationFrame(loop);
+  }
+
+  function pressLeft(){
+    if(!running) return;
+    if(countdownActive) endCountdown();
+    keydown = true;
+    playerDir = -1;
+    facingDir = -1;
+    doodle.dx = -moveSpeed;
+  }
+
+  function pressRight(){
+    if(!running) return;
+    if(countdownActive) endCountdown();
+    keydown = true;
+    playerDir = 1;
+    facingDir = 1;
+    doodle.dx = moveSpeed;
+  }
+
+  function release(){
+    keydown = false;
+  }
+
+
+  const leftBtn = document.getElementById('leftBtn');
+  const rightBtn = document.getElementById('rightBtn');
+
+  leftBtn.addEventListener('pointerdown', e => {e.preventDefault(); pressLeft();});
+  rightBtn.addEventListener('pointerdown', e => {e.preventDefault(); pressRight();});
+  ['pointerup','pointercancel','pointerleave'].forEach(type => {
+    leftBtn.addEventListener(type, release);
+    rightBtn.addEventListener(type, release);
+  });
+
+  document.addEventListener('keydown', e => {
+    if(e.key === 'ArrowLeft') pressLeft();
+    if(e.key === 'ArrowRight') pressRight();
+  });
+  document.addEventListener('keyup', e => {
+    if(e.key === 'ArrowLeft' || e.key === 'ArrowRight') release();
+  });
+
+  // Touch/hold anywhere on the playable screen:
+  // left half = move left, right half = move right.
+  // The on-screen buttons keep working independently.
+  let screenPointerId = null;
+
+  function moveFromScreenPosition(clientX){
+    if(!running) return;
+    const rect = gameScreen.getBoundingClientRect();
+    const localX = clientX - rect.left;
+    const half = rect.width / 2;
+
+    if(localX < half){
+      pressLeft();
+    }else{
+      pressRight();
+    }
+  }
+
+  gameScreen.addEventListener('pointerdown', e => {
+    if(e.target.closest('.control')) return;
+    if(!running) return;
+
+    e.preventDefault();
+    screenPointerId = e.pointerId;
+    if(gameScreen.setPointerCapture){
+      try{ gameScreen.setPointerCapture(e.pointerId); }catch(err){}
+    }
+    moveFromScreenPosition(e.clientX);
+  });
+
+  gameScreen.addEventListener('pointermove', e => {
+    if(e.target.closest('.control')) return;
+    if(screenPointerId !== e.pointerId || !running) return;
+    moveFromScreenPosition(e.clientX);
+  });
+
+  function releaseScreenPointer(e){
+    if(screenPointerId !== null && e.pointerId !== undefined && e.pointerId !== screenPointerId) return;
+    screenPointerId = null;
+    release();
+  }
+
+  gameScreen.addEventListener('pointerup', releaseScreenPointer);
+  gameScreen.addEventListener('pointercancel', releaseScreenPointer);
+  gameScreen.addEventListener('lostpointercapture', releaseScreenPointer);
+
+  function handleResize(){
+    const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    document.documentElement.style.setProperty('--app-height', `${viewportHeight}px`);
+  }
+
+  handleResize();
+  window.addEventListener('resize', handleResize);
+  if(window.visualViewport){
+    window.visualViewport.addEventListener('resize', handleResize);
+  }
+
+  // ============================================================
+  // FAST FIRST LOAD
+  // Wait until the assets required by the FIRST gameplay frame are
+  // actually ready before starting. This prevents the background,
+  // player, platform and controls from appearing one-by-one.
+  // ============================================================
+  function waitForImage(img){
+    if(img.complete && img.naturalWidth > 0){
+      if(typeof img.decode === 'function'){
+        return img.decode().catch(() => {});
+      }
+      return Promise.resolve();
+    }
+
+    return new Promise(resolve => {
+      const done = () => resolve();
+      img.addEventListener('load', done, {once:true});
+      img.addEventListener('error', done, {once:true});
+    }).then(() => {
+      if(img.complete && img.naturalWidth > 0 && typeof img.decode === 'function'){
+        return img.decode().catch(() => {});
+      }
+    });
+  }
+
+  async function startWhenGameplayAssetsReady(){
+    const criticalImages = [
+      gameBgImage,
+      platformImage,
+      characterJump1Image,
+      characterJump2Image,
+      characterFall1Image,
+      characterFall2Image,
+      document.getElementById('scoreBoxImg'),
+      document.getElementById('hudLogo'),
+      document.getElementById('leftBtnImg'),
+      document.getElementById('rightBtnImg')
+    ];
+
+    // Fetch all critical files in parallel, then reveal/start gameplay together.
+    await Promise.all(criticalImages.map(waitForImage));
+
+    startGame();
+
+    // Final-screen assets have the full 30-second game time to finish loading.
+    // They are deliberately not allowed to delay the playable start.
+    [
+      document.getElementById('endMenuBox'),
+      document.getElementById('endBg'),
+      document.getElementById('endLogo'),
+      document.getElementById('endMessageImage'),
+      document.getElementById('ctaPrimaryImg')
+    ].forEach(img => {
+      if(img && img.src && !(img.complete && img.naturalWidth > 0)){
+        try{ img.fetchPriority = 'low'; }catch(err){}
+      }
+    });
+  }
+
+  startWhenGameplayAssetsReady();
+
+  // CTA click-through actions: replace the console.log lines with your final URLs / ad SDK exit calls.
+  document.getElementById('ctaPrimary').addEventListener('click', () => {
+    console.log('Primary CTA clicked');
+  });
+
+})();
+</script>
+</body>
+</html>

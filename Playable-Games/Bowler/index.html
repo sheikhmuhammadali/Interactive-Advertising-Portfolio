@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<meta name="ad.size" content="width=320,height=480">
+<title>Cricket Wickets</title>
+<style>
+:root { --bg:#0b5d2a; --pitch:#c7a97a; }
+*, *::before, *::after { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: #0f172a;
+  font-family: system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial;
+  user-select: none;
+}
+.game { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
+canvas { width: 100%; height: 100%; display: block; }
+
+.hud {
+  position: absolute;
+  top: env(safe-area-inset-top,8px);
+  left: 8px; right: 8px;
+  display: flex;
+  gap: 6px;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+  z-index: 10;
+}
+.pill {
+  background: rgba(0,0,0,.45);
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-weight: 700;
+  color: #fff;
+  font-size: 12px;
+  pointer-events: auto;
+  white-space: nowrap;
+}
+.pill span { color: #fbbf24; }
+.btn {
+  pointer-events: auto;
+  border: 0;
+  background: #1d4ed8;
+  color: #fff;
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+}
+.btn:active { background: #1e40af; }
+
+.overlay {
+  position: absolute; inset: 0;
+  display: none;
+  place-items: center;
+  background: rgba(0,0,0,.65);
+  z-index: 20;
+}
+.overlay.show { display: grid; }
+.card {
+  background: #0b1220;
+  border: 1px solid rgba(255,255,255,.15);
+  padding: 24px 28px;
+  border-radius: 16px;
+  text-align: center;
+  color: #fff;
+  min-width: 220px;
+}
+.card h3 { margin: 0 0 8px; font-size: 20px; }
+.card p { margin: 0 0 16px; color: #94a3b8; font-size: 14px; }
+.big-score { font-size: 42px; font-weight: 900; color: #fbbf24; margin: 8px 0; }
+.tip { font-size: 11px; color: #64748b; margin-top: 4px; }
+
+/* delivery type badge */
+.delivery-badge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
+  background: rgba(251,191,36,.9);
+  color: #000;
+  font-weight: 900;
+  font-size: 15px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  pointer-events: none;
+  z-index: 15;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.delivery-badge.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="game">
+  <canvas id="game"></canvas>
+
+  <div class="hud">
+    <div class="pill" id="score">Score: <span>0</span></div>
+    <div class="pill" id="delivery-wrap" style="display:flex;flex-direction:column;gap:3px;align-items:center;padding:4px 8px">
+      <div style="font-size:10px;color:#94a3b8;font-weight:600;letter-spacing:.5px">THIS BALL</div>
+      <div id="delivery" style="font-size:12px;font-weight:700;color:#fff">—</div>
+      <div style="font-size:10px;color:#94a3b8;font-weight:600;letter-spacing:.5px;margin-top:2px">NEXT BALL</div>
+      <div id="nextDelivery" style="font-size:11px;font-weight:600;color:#94a3b8">—</div>
+    </div>
+    <div class="pill" id="balls">Balls: <span>6</span></div>
+    <button class="btn" id="reset">↺ Restart</button>
+  </div>
+
+  <div class="delivery-badge" id="badge"></div>
+
+  <div class="overlay" id="over">
+    <div class="card">
+      <h3>⚡ Innings Over!</h3>
+      <div class="big-score" id="final">0</div>
+      <p id="final-sub">wickets taken</p>
+      <button class="btn" id="again" style="width:100%;padding:10px">Play Again</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="startScreen">
+    <div class="card">
+      <h3>🏏 Cricket Wickets</h3>
+      <p style="color:#e2e8f0;font-size:13px;margin-bottom:4px">Aim with mouse / drag finger<br>Click / tap to bowl</p>
+      <p style="color:#94a3b8;font-size:12px">Batsman will try to block — outsmart him!<br>Swing, spin & yorkers await.</p>
+      <div style="margin:12px 0 16px;padding:10px;background:rgba(255,255,255,.05);border-radius:8px;font-size:11px;color:#94a3b8">
+        🟢 Inswing &nbsp;|&nbsp; 🔵 Outswing &nbsp;|&nbsp; 🟡 Spin &nbsp;|&nbsp; 🔴 Yorker
+      </div>
+      <button class="btn" id="startBtn" style="width:100%;padding:10px">Start Bowling!</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+
+  let W = 300, H = 600;
+
+  // ---- resize ----
+  function resize() {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    W = rect.width;
+    H = rect.height;
+    initField();
+  }
+  window.addEventListener('resize', resize);
+
+  // ---- state ----
+  let score = 0, ballsLeft = 6, gameRunning = false;
+  const TOTAL_BALLS = 6;
+
+  const ballR = () => Math.max(5, W * 0.016);
+  let ball = null;
+
+  // Wicket dimensions scale with screen
+  const stumpCount = 3;
+  const stumpW  = () => Math.max(5, W * 0.015);
+  const stumpGap= () => Math.max(4, W * 0.012);
+  const wicketH = () => Math.max(28, H * 0.06);
+  const wicketW = () => stumpW()*3 + stumpGap()*2;
+
+  let topWicket = {};
+  let stumpsFlying = []; // animated stumps on hit
+
+  let bowler = {};
+  let targetX = 0;
+
+  // Batsman
+  let bat = { x:0, y:0, angle:0, swing:false, swingDir:1, timer:0 };
+
+  let deliveryType = '';
+  let lastCursorX = null;
+
+  function initField() {
+    topWicket = {
+      x: W/2 - wicketW()/2,
+      y: H * 0.12,
+      w: wicketW(),
+      h: wicketH(),
+      hit: false
+    };
+    bowler = { x: W/2, y: H * 0.88 };
+    targetX = W/2;
+
+    bat.x = W/2;
+    bat.y = topWicket.y + wicketH() + 18;
+    bat.angle = 0;
+  }
+
+  // ---- delivery types ----
+  const DELIVERIES = [
+    { name:'Inswing 🟢',  color:'#34d399', ax: +0.012, spin: 0, yorker: false },
+    { name:'Outswing 🔵', color:'#60a5fa', ax: -0.012, spin: 0, yorker: false },
+    { name:'Leg Spin 🟡', color:'#fbbf24', ax: +0.007, spin: +0.018, yorker: false },
+    { name:'Off Spin 🟡', color:'#fbbf24', ax: -0.007, spin: -0.018, yorker: false },
+    { name:'Yorker 🔴',   color:'#f87171', ax: 0,      spin: 0, yorker: true  },
+    { name:'Bouncer 💥',  color:'#e879f9', ax: (Math.random()<.5?1:-1)*0.008, spin: 0, yorker: false },
+  ];
+
+  let nextDelivery = null;
+
+  function pickRandom() {
+    return DELIVERIES[Math.floor(Math.random()*DELIVERIES.length)];
+  }
+
+  function chooseDelivery() {
+    const d = nextDelivery || pickRandom();
+    nextDelivery = pickRandom();
+    document.getElementById('delivery').textContent = d.name;
+    document.getElementById('nextDelivery').textContent = nextDelivery.name;
+    showBadge(d.name, d.color);
+    return d;
+  }
+
+  function initNextDelivery() {
+    nextDelivery = pickRandom();
+    document.getElementById('delivery').textContent = '—';
+    document.getElementById('nextDelivery').textContent = nextDelivery.name;
+  }
+
+  function showBadge(text, color) {
+    const b = document.getElementById('badge');
+    b.textContent = text;
+    b.style.background = color + 'cc';
+    b.style.color = color === '#fbbf24' ? '#000' : '#fff';
+    b.classList.add('show');
+    setTimeout(() => b.classList.remove('show'), 1000);
+  }
+
+  // ---- particles ----
+  let particles = [];
+  function spawnParticles(x, y, color, n=12) {
+    for(let i=0;i<n;i++){
+      const angle = Math.random()*Math.PI*2;
+      const speed = 1 + Math.random()*4;
+      particles.push({
+        x,y,
+        vx: Math.cos(angle)*speed,
+        vy: Math.sin(angle)*speed,
+        life: 1,
+        decay: 0.025 + Math.random()*0.03,
+        r: 2 + Math.random()*3,
+        color
+      });
+    }
+  }
+
+  // ---- flying stumps ----
+  function spawnStumps(w) {
+    for(let i=0;i<3;i++){
+      const sx = w.x + i*(stumpW()+stumpGap()) + stumpW()/2;
+      const sy = w.y + wicketH()/2;
+      stumpsFlying.push({
+        x: sx, y: sy,
+        vx: (Math.random()-0.5)*6,
+        vy: -(3+Math.random()*4),
+        rot: 0,
+        rotV: (Math.random()-0.5)*0.3,
+        life: 1
+      });
+    }
+  }
+
+  // ---- batsman AI ----
+  function triggerBatsman(bx) {
+    // Batsman reacts based on ball x position — swings toward or misses
+    const center = W/2;
+    const diff = bx - center;
+    bat.swing = true;
+    bat.swingDir = diff > 0 ? 1 : -1;
+    bat.timer = 0;
+  }
+
+  // ---- scoring popups ----
+  let popups = [];
+  function scorePopup(x, y, text, color='#fbbf24') {
+    popups.push({ x, y, vy:-1.5, text, color, life:1 });
+  }
+
+  // ---- draw helpers ----
+  function drawPitch() {
+    // Sky/stadium gradient bg
+    const bg = ctx.createLinearGradient(0,0,0,H);
+    bg.addColorStop(0,'#0f2027');
+    bg.addColorStop(1,'#1a3a1a');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0,0,W,H);
+
+    // Outfield (oval)
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(W/2, H/2, W*0.48, H*0.47, 0, 0, Math.PI*2);
+    ctx.fillStyle = '#166534';
+    ctx.fill();
+    ctx.strokeStyle = '#15803d';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.restore();
+
+    // Pitch strip
+    const px = W/2 - W*0.12, pw = W*0.24;
+    ctx.fillStyle = '#c7a97a';
+    ctx.fillRect(px, H*0.06, pw, H*0.88);
+
+    // Crease lines
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.5;
+    // popping crease top
+    ctx.beginPath();
+    ctx.moveTo(px-6, topWicket.y + wicketH() + 10);
+    ctx.lineTo(px+pw+6, topWicket.y + wicketH() + 10);
+    ctx.stroke();
+    // popping crease bottom
+    ctx.beginPath();
+    ctx.moveTo(px-6, H*0.80);
+    ctx.lineTo(px+pw+6, H*0.80);
+    ctx.stroke();
+
+    // Pitch wear marks
+    ctx.fillStyle = 'rgba(0,0,0,0.06)';
+    for(let i=0;i<5;i++){
+      ctx.beginPath();
+      ctx.ellipse(px+pw/2 + (Math.sin(i*1.7)*pw*0.2),
+                  H*0.3 + i*H*0.1, 6+i*2, 3, 0,0,Math.PI*2);
+      ctx.fill();
+    }
+  }
+
+  function drawWicket(w) {
+    if(w.hit) return; // stumps flying instead
+
+    const sw = stumpW(), sg = stumpGap(), wh = wicketH();
+    // shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    for(let i=0;i<3;i++){
+      ctx.fillRect(w.x+i*(sw+sg)+2, w.y+4, sw, wh);
+    }
+    // stumps
+    const grad = ctx.createLinearGradient(0, w.y, 0, w.y+wh);
+    grad.addColorStop(0,'#f5e6c8');
+    grad.addColorStop(1,'#b8845a');
+    ctx.fillStyle = grad;
+    for(let i=0;i<3;i++){
+      ctx.fillRect(w.x+i*(sw+sg), w.y, sw, wh);
+    }
+    // bails
+    ctx.fillStyle = '#f5e6c8';
+    ctx.fillRect(w.x-1, w.y-3, w.w+2, 3);
+    // bail detail
+    ctx.strokeStyle = '#b8845a';
+    ctx.lineWidth = 0.5;
+    ctx.strokeRect(w.x-1, w.y-3, w.w+2, 3);
+  }
+
+  function drawFlyingStumps() {
+    stumpsFlying.forEach(s => {
+      ctx.save();
+      ctx.translate(s.x, s.y);
+      ctx.rotate(s.rot);
+      ctx.globalAlpha = s.life;
+      ctx.fillStyle = '#c7a97a';
+      ctx.fillRect(-stumpW()/2, -wicketH()/2, stumpW(), wicketH());
+      ctx.restore();
+    });
+  }
+
+  function drawBatsman() {
+    if(!gameRunning) return;
+    const bx = bat.x, by = bat.y;
+
+    // Batsman figure
+    ctx.save();
+    ctx.translate(bx, by);
+
+    // Body
+    ctx.fillStyle = '#3b82f6';
+    ctx.fillRect(-6, -20, 12, 22);
+
+    // Helmet
+    ctx.fillStyle = '#1d4ed8';
+    ctx.beginPath();
+    ctx.arc(0, -22, 8, Math.PI, 0);
+    ctx.fill();
+    ctx.fillRect(-8, -22, 16, 4);
+
+    // Grill (visor)
+    ctx.strokeStyle = '#93c5fd';
+    ctx.lineWidth = 1;
+    for(let i=0;i<3;i++){
+      ctx.beginPath();
+      ctx.moveTo(-6+i*3, -20);
+      ctx.lineTo(-6+i*3, -16);
+      ctx.stroke();
+    }
+
+    // Bat arm
+    ctx.save();
+    const swingAngle = bat.swing
+      ? Math.sin(bat.timer * 4) * 1.1 * bat.swingDir
+      : (Math.sin(Date.now()*0.001)*0.15);
+    ctx.rotate(swingAngle);
+    // arm
+    ctx.fillStyle = '#fde68a';
+    ctx.fillRect(-2, -18, 4, 18);
+    // bat blade
+    ctx.fillStyle = '#c7a97a';
+    ctx.fillRect(-4, 0, 8, 22);
+    ctx.strokeStyle = '#8b5a2b';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(-4, 0, 8, 22);
+    ctx.restore();
+
+    // Pads
+    ctx.fillStyle = '#e2e8f0';
+    ctx.fillRect(-8, 2, 6, 16);
+    ctx.fillRect(2, 2, 6, 16);
+
+    ctx.restore();
+  }
+
+  function drawBall() {
+    if(!ball) return;
+    const r = ballR();
+    const x = ball.x, y = ball.y;
+
+    // Shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.2)';
+    ctx.beginPath();
+    ctx.ellipse(x+2, y+2, r, r*0.5, 0, 0, Math.PI*2);
+    ctx.fill();
+
+    // Ball
+    const g = ctx.createRadialGradient(x-r*0.3,y-r*0.3,1, x,y,r);
+    g.addColorStop(0,'#ff6b7a');
+    g.addColorStop(0.5,'#dc2626');
+    g.addColorStop(1,'#7f1d1d');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI*2);
+    ctx.fill();
+
+    // Seam
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(x, y, r*0.6, ball.seamAngle||0, (ball.seamAngle||0)+Math.PI);
+    ctx.stroke();
+  }
+
+  function drawTarget() {
+    if(!gameRunning || ball) return;
+    ctx.strokeStyle = 'rgba(16,185,129,.5)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4,4]);
+    ctx.beginPath();
+    ctx.moveTo(targetX, topWicket.y + wicketH() + 10);
+    ctx.lineTo(targetX, bowler.y - 14);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Aim dot
+    ctx.fillStyle = 'rgba(16,185,129,.8)';
+    ctx.beginPath();
+    ctx.arc(targetX, topWicket.y + wicketH()/2, 4, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  function drawBowler() {
+    const bx = bowler.x, by = bowler.y;
+    ctx.save();
+    ctx.translate(bx, by);
+
+    // Body
+    ctx.fillStyle = '#16a34a';
+    ctx.fillRect(-5,-18,10,20);
+    // Head
+    ctx.fillStyle = '#fde68a';
+    ctx.beginPath(); ctx.arc(0,-22,7,0,Math.PI*2); ctx.fill();
+    // Cap
+    ctx.fillStyle = '#16a34a';
+    ctx.beginPath(); ctx.ellipse(0,-26,7,3,0,0,Math.PI*2); ctx.fill();
+    // Arm (bowling)
+    ctx.fillStyle = '#fde68a';
+    ctx.fillRect(4,-16,3,14);
+
+    ctx.restore();
+  }
+
+  function drawParticles() {
+    particles.forEach(p => {
+      ctx.globalAlpha = p.life;
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+  }
+
+  function drawPopups() {
+    popups.forEach(p => {
+      ctx.globalAlpha = p.life;
+      ctx.fillStyle = p.color;
+      ctx.font = `bold ${Math.max(14,W*0.04)}px system-ui`;
+      ctx.textAlign = 'center';
+      ctx.fillText(p.text, p.x, p.y);
+    });
+    ctx.globalAlpha = 1;
+    ctx.textAlign = 'left';
+  }
+
+  function draw() {
+    ctx.clearRect(0,0,W,H);
+    drawPitch();
+    drawWicket(topWicket);
+    drawFlyingStumps();
+    drawTarget();
+    drawBatsman();
+    drawBowler();
+    drawBall();
+    drawParticles();
+    drawPopups();
+  }
+
+  // ---- physics update ----
+  function update() {
+    // Ball
+    if(ball) {
+      // Spin increases over time
+      if(ball.spin) ball.vx += ball.spin * (1 - (ball.y - topWicket.y)/(bowler.y - topWicket.y));
+      ball.vx += ball.ax;
+      ball.x += ball.vx;
+      ball.y += ball.vy;
+      ball.seamAngle = (ball.seamAngle||0) + 0.15;
+
+      const r = ballR();
+
+      // Hit top wicket?
+      if(!topWicket.hit &&
+         ball.y <= topWicket.y + wicketH() &&
+         ball.y >= topWicket.y - 4 &&
+         ball.x > topWicket.x - r &&
+         ball.x < topWicket.x + topWicket.w + r) {
+        wicketHit();
+        return;
+      }
+
+      // Batsman deflect — if ball near bat area
+      if(!topWicket.hit &&
+         Math.abs(ball.x - bat.x) < 16 &&
+         Math.abs(ball.y - bat.y) < 20) {
+        triggerBatsman(ball.x);
+        // Check if batsman actually connects (he swings a bit randomly)
+        const hitChance = 0.55;
+        if(Math.random() < hitChance) {
+          spawnParticles(ball.x, ball.y, '#fde68a', 8);
+          scorePopup(ball.x, ball.y - 20, 'Blocked!', '#fbbf24');
+          ball.vx = (ball.x > W/2 ? 1:-1) * (2+Math.random()*3);
+          ball.vy = -(1+Math.random()*2);
+          ball.blocked = true;
+        }
+      }
+
+      // Ball out of bounds
+      if(ball.y < -20 || ball.y > H+20 || ball.x < -40 || ball.x > W+40) {
+        if(!ball.blocked) {
+          scorePopup(W/2, H/2, 'Missed!', '#f87171');
+        }
+        nextBall(false);
+      }
+    }
+
+    // Bat swing animation
+    if(bat.swing) {
+      bat.timer += 0.08;
+      if(bat.timer > 1.2) { bat.swing = false; bat.timer = 0; }
+    }
+
+    // Flying stumps
+    stumpsFlying.forEach(s => {
+      s.x += s.vx;
+      s.y += s.vy;
+      s.vy += 0.18; // gravity
+      s.rot += s.rotV;
+      s.life -= 0.015;
+    });
+    stumpsFlying = stumpsFlying.filter(s => s.life > 0);
+
+    // Particles
+    particles.forEach(p => {
+      p.x += p.vx; p.y += p.vy;
+      p.vy += 0.1;
+      p.life -= p.decay;
+    });
+    particles = particles.filter(p => p.life > 0);
+
+    // Popups
+    popups.forEach(p => { p.y += p.vy; p.life -= 0.02; });
+    popups = popups.filter(p => p.life > 0);
+  }
+
+  function wicketHit() {
+    topWicket.hit = true;
+    spawnStumps(topWicket);
+    spawnParticles(topWicket.x + topWicket.w/2, topWicket.y, '#fbbf24', 20);
+    spawnParticles(topWicket.x + topWicket.w/2, topWicket.y, '#ef4444', 10);
+
+    score++;
+    const msgs = ['Bowled! 💥', 'Timber! 🔥', 'Clean Bowled! ⚡', 'Wicket! 🏏'];
+    scorePopup(W/2, H/2 - 30, msgs[Math.floor(Math.random()*msgs.length)], '#fbbf24');
+    showBadge('WICKET!','#ef4444');
+
+    updateHUD();
+    ball = null;
+
+    // Reset wicket after delay
+    setTimeout(() => {
+      topWicket.hit = false;
+      topWicket.x = W/2 - wicketW()/2;
+      topWicket.y = H*0.12;
+    }, 1200);
+
+    ballsLeft--;
+    if(ballsLeft <= 0) {
+      setTimeout(gameOver, 1400);
+    }
+  }
+
+  function nextBall(wasHit) {
+    ball = null;
+    ballsLeft--;
+    updateHUD();
+    if(ballsLeft <= 0) {
+      setTimeout(gameOver, 600);
+    }
+  }
+
+  // ---- bowl ----
+  function bowl() {
+    if(!gameRunning || ball || ballsLeft <= 0) return;
+
+    const d = chooseDelivery();
+    const r = ballR();
+
+    let startX = bowler.x;
+    let startY = bowler.y - 14;
+
+    // Yorker: aim at base of stumps
+    const aimY = d.yorker
+      ? topWicket.y + wicketH() - 4
+      : topWicket.y + wicketH()*0.4;
+
+    const dx = targetX - startX;
+    const dy = aimY - startY;
+    const dist = Math.hypot(dx, dy);
+
+    // Speed varies by delivery type
+    const baseSpeed = d.yorker ? 9 : 6 + Math.random()*2;
+    const vx = (dx/dist)*baseSpeed;
+    const vy = (dy/dist)*baseSpeed;
+
+    ball = {
+      x: startX, y: startY,
+      vx, vy,
+      ax: d.ax,
+      spin: d.spin,
+      seamAngle: 0,
+      blocked: false
+    };
+  }
+
+  // ---- pointer ----
+  function setTarget(e) {
+    if(!gameRunning) return;
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const rx = (clientX - rect.left) * (W / rect.width);
+    targetX = Math.max(W*0.25, Math.min(rx, W*0.75));
+    lastCursorX = rx;
+  }
+  canvas.addEventListener('pointermove', setTarget);
+  canvas.addEventListener('touchmove', setTarget, { passive:true });
+  canvas.addEventListener('click', bowl);
+  canvas.addEventListener('touchend', e => { e.preventDefault(); bowl(); });
+
+  // ---- HUD ----
+  function updateHUD() {
+    document.getElementById('score').innerHTML = `Score: <span>${score}</span>`;
+    document.getElementById('balls').innerHTML = `Balls: <span>${ballsLeft}</span>`;
+  }
+
+  function gameOver() {
+    gameRunning = false;
+    document.getElementById('final').textContent = score;
+    const sub = score === 0 ? 'Better luck next time!'
+      : score <= 2 ? 'Not bad!'
+      : score <= 4 ? 'Great bowling! 🏏'
+      : 'Legendary! 🔥';
+    document.getElementById('final-sub').textContent = `${score} wicket${score!==1?'s':''} — ${sub}`;
+    document.getElementById('over').classList.add('show');
+  }
+
+  function reset() {
+    score = 0;
+    ballsLeft = TOTAL_BALLS;
+    gameRunning = true;
+    ball = null;
+    stumpsFlying = [];
+    particles = [];
+    popups = [];
+    topWicket.hit = false;
+    nextDelivery = null;
+    document.getElementById('over').classList.remove('show');
+    updateHUD();
+    initField();
+    initNextDelivery();
+  }
+
+  document.getElementById('reset').addEventListener('click', reset);
+  document.getElementById('again').addEventListener('click', reset);
+  document.getElementById('startBtn').addEventListener('click', () => {
+    document.getElementById('startScreen').classList.remove('show');
+    gameRunning = true;
+    initNextDelivery();
+  });
+
+  // ---- loop ----
+  function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  resize();
+  updateHUD();
+  document.getElementById('startScreen').classList.add('show');
+  loop();
+})();
+</script>
+</body>
+</html>

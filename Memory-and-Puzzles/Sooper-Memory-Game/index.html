@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>Comparison</title>
+
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap");
+
+    :root{ --vh: 1vh; --hud-space: clamp(64px, 14vw, 100px); }
+
+    *{ box-sizing:border-box; margin:0; padding:0; }
+    html,body{ height:100%; }
+    body{
+      font-family:"Roboto",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+      background:#610000; color:#fff; overflow:hidden;
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    }
+
+    .scale-wrapper{
+      position:relative; width:100vw; height:calc(var(--vh)*100);
+      display:grid; place-items:center; background:#610000; overflow:hidden;
+    }
+
+    .container{
+      position:relative; width:min(100vw,640px); height:calc(var(--vh)*100); max-height:100vh;
+      background:url("assets/startscreen.jpg") no-repeat center/cover;
+      overflow:hidden; transition:background-image .3s ease;
+    }
+
+    /* END SCREEN BADGE — stacked layout */
+    .end-screen-product .content{
+      position:absolute;
+      left:50%;
+      top: 14%;
+      transform:translate(-50%,-50%);
+      display:flex;
+      flex-direction:column;            /* stack label over time */
+      align-items:center;               /* center horizontally */
+      gap:8px;                          /* space between lines */
+      padding:6px 6px 6px;
+      min-width: 220px;                 /* keeps shape tidy on small screens */
+      border-radius:16px;
+      background:#b80f1c;
+      border:2px solid #7a0a12;
+      box-shadow:
+        0 10px 22px rgba(0,0,0,.35),
+        inset 0 -4px 0 #8e0d17,
+        inset 0  3px 0 #d91624;
+    }
+
+    .end-screen-product .content .text{
+      text-transform:uppercase;
+      font-size:clamp(10px,2.9vw,15px);
+      font-weight:900;
+      letter-spacing:.18em;
+      line-height:1.1;
+      color:#fff;
+      text-align:center;                /* center the top text */
+      text-shadow:0 2px 0 #7a0a12;
+      opacity:.98;
+    }
+
+    .end-screen-product .content .score{
+      font-size:clamp(60px,14vw,86px);  /* big number on the bottom */
+      font-weight:900;
+      line-height:1;
+      color:#fff;
+      text-shadow:
+        0 2px 0 #4a0000,
+        0 4px 0 #4a0000,
+        0 6px 0 #4a0000,
+        0 10px 18px rgba(0,0,0,.45);
+      margin-left:0;                    /* no side-by-side spacing anymore */
+    }
+    
+    /* ===== HUD (logo + timer) ===== */
+    .hud{
+      display:none; /* hidden on start & end */
+      position:absolute; left:calc(31px + env(safe-area-inset-left));
+      right:calc(31px + env(safe-area-inset-right));
+      justify-content:space-between; align-items:center; gap:8px; z-index:6; pointer-events:none;
+    }
+    /* Only visible during gameplay */
+    .container.show-hud .hud{ display:flex; }
+
+    .brand-logo{
+      display:block; width:clamp(38px,12vw,56px); height:auto; margin-left:6px; object-fit:contain;
+      filter:drop-shadow(0 2px 6px rgba(0,0,0,.35));
+    }
+    .hud-metrics{ display:flex; gap:8px; align-items:flex-end; }
+    .ribbon-badge{
+      display:inline-flex; align-items:center; gap:8px; padding:8px 12px;
+      border-radius:12px; background:#b80f1c; border:2px solid #7a0a12;
+      box-shadow:0 6px 14px rgba(0,0,0,.28), inset 0 -3px 0 #8e0d17, inset 0 2px 0 #d91624;
+      pointer-events:none;
+    }
+    .ribbon-badge .label{
+      text-transform:uppercase; font-size:12px; font-weight:900; letter-spacing:.14em;
+      color:#fff; text-shadow:0 2px 0 #7a0a12; opacity:.95;
+    }
+    .ribbon-badge .value{
+      font-size:32px; font-weight:900; line-height:1; color:#fff;
+      text-shadow:0 1px 0 #4a0000, 0 2px 6px rgba(0,0,0,.35);
+      margin-left:2px; min-width:2ch; text-align:right;
+    }
+
+    /* Buttons */
+    .startBtn,.btn{
+      position:absolute; left:50%; transform:translateX(-50%);
+      width:min(50%,240px); height:auto; cursor:pointer; z-index:3; user-select:none; -webkit-user-drag:none;
+    }
+    .startBtn{ bottom:calc(10% + env(safe-area-inset-bottom)); }
+    .getMySample{ bottom:calc(18% + env(safe-area-inset-bottom)); display:none; }
+    .playAgain{ bottom:calc(8% + env(safe-area-inset-bottom)); display:none; }
+
+    /* Game layer */
+    .main-class{ position:absolute; inset:0; display:flex; flex-direction:column; padding:12px 16px; opacity:0; pointer-events:none; transition:opacity .25s ease; }
+    .container.started .main-class{ opacity:1; pointer-events:auto; }
+    .startBtn{ display:block; z-index:3; }
+    .container.started .startBtn{ display:none; }
+
+    .scoreBox{ display:none; } /* old header hidden */
+
+    /* Board */
+    .memory-game{
+      flex:1 1 auto; min-height:0; display:grid;
+      grid-template-columns:repeat(2,1fr); grid-template-rows:repeat(4,minmax(0,1fr));
+      gap:12px; width:90%; max-width:620px; margin:0 auto;
+    }
+    .memory-game .memory-card{
+      position:relative; width:100%; height:100%; margin:0;
+      transform-style:preserve-3d; transition:transform .5s; border-radius:8px;
+      box-shadow:0 2px 10px rgba(0,0,0,.25); background:#ffeaea2b;
+    }
+    .memory-card{ width:unset; height:unset; margin:unset; }
+    .memory-game .front-face,.memory-game .back-face{
+      position:absolute !important; inset:0 !important; width:100% !important; height:100% !important;
+      display:block !important; border-radius:8px !important; object-fit:contain !important;
+      backface-visibility:hidden !important; -webkit-backface-visibility:hidden !important;
+    }
+    .memory-game .front-face{ transform:rotateY(180deg); }
+    .memory-game .memory-card.flip{ transform:rotateY(180deg); }
+    .memory-game .back-face{ object-fit:cover !important; }
+
+    .matchedImage{
+      position:absolute; inset:0; background:rgba(0,0,0,.7);
+      display:flex; align-items:center; justify-content:center; visibility:hidden; z-index:4;
+    }
+    .matchedImage img{ width:min(45%,190px); height:auto; object-fit:contain; display:block; }
+
+    .cards-wrapper{
+      background:#600d13; border-radius:12px; padding:12px; width:92%; max-width:620px;
+      margin:8px auto 0; box-sizing:border-box; flex:1 1 auto; display:flex; align-items:center; justify-content:center;
+    }
+    .cards-wrapper .memory-game{ width:100%; height:100%; margin:0; }
+
+    /* Add top gap only when HUD is visible */
+    .container.show-hud .cards-wrapper{ margin-top: calc(8px + var(--hud-space)); }
+
+    img{ max-width:100%; height:auto; }
+
+    @media (min-width:640px){
+      .container{ max-width:640px; }
+      .memory-game{ width:88%; gap:10px; }
+    }
+    @media (max-width:340px){
+      .memory-game{ width:94%; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="scale-wrapper">
+    <div class="container" id="app">
+      <!-- HUD: logo + TIMER ONLY -->
+      <div class="hud">
+        <img class="brand-logo" src="assets/logo.png" alt="Brand logo" />
+        <div class="hud-metrics">
+          <div class="ribbon-badge">
+            <span class="label">Time</span>
+            <span id="hudTimerValue" class="value">00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- End screen (shows TIME taken) -->
+      <div class="end-screen-product" style="display:none;">
+        <div class="content">
+          <p class="text">time</p>
+          <p class="score">00</p>
+        </div>
+      </div>
+
+      <img src="assets/playbutton.png" class="startBtn" alt="Start" onclick="startBtn()" />
+      <img src="assets/playagain.png" class="btn playAgain" alt="Play Again" onclick="playAgain()"/>
+
+      <div class="main-class" id="gameLayer">
+        <div class="cards-wrapper">
+          <section class="memory-game" aria-label="Memory Game">
+            <!-- 8 cards = 4 pairs -->
+            <div class="memory-card" data-framework="1">
+              <img class="front-face" src="assets/1.png" alt="1"/>
+              <img class="back-face"  src="assets/pattern.jpg" alt="Back"/>
+            </div>
+            <div class="memory-card" data-framework="1">
+              <img class="front-face" src="assets/1.png" alt="1"/>
+              <img class="back-face"  src="assets/pattern.jpg" alt="Back"/>
+            </div>
+
+            <div class="memory-card" data-framework="2">
+              <img class="front-face" src="assets/2.png" alt="2"/>
+              <img class="back-face"  src="assets/pattern.jpg" alt="Back"/>
+            </div>
+            <div class="memory-card" data-framework="2">
+              <img class="front-face" src="assets/2.png" alt="2"/>
+              <img class="back-face"  src="assets/pattern.jpg" alt="Back"/>
+            </div>
+
+            <div class="memory-card" data-framework="3">
+              <img class="front-face" src="assets/3.png" alt="3"/>
+              <img class="back-face"  src="assets/pattern.jpg" alt="Back"/>
+            </div>
+            <div class="memory-card" data-framework="3">
+              <img class="front-face" src="assets/3.png" alt="3"/>
+              <img class="back-face"  src="assets/pattern.jpg" alt="Back"/>
+            </div>
+
+            <div class="memory-card" data-framework="4">
+              <img class="front-face" src="assets/4.png" alt="4"/>
+              <img class="back-face"  src="assets/pattern.jpg" alt="Back"/>
+            </div>
+            <div class="memory-card" data-framework="4">
+              <img class="front-face" src="assets/4.png" alt="4"/>
+              <img class="back-face"  src="assets/pattern.jpg" alt="Back"/>
+            </div>
+          </section>
+        </div>
+
+        <section class="matchedImage" aria-live="polite">
+          <img src="assets/3.png" alt="Matched product"/>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* iOS 100vh fix */
+    function setVh(){
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    }
+    setVh(); window.addEventListener('resize', setVh);
+
+    // ====== GAME / UI HOOKS ======
+    let seconds = 0;
+    let matchedPairs = 0;
+    let totalPairs = 4; // will be reset after DOM ready
+    const cards = [];
+
+    const timerDisplay   = document.getElementById("hudTimerValue");
+    const matchedImage   = document.querySelector(".matchedImage");
+    const cardsBox       = document.getElementById("gameLayer");
+    const container      = document.querySelector(".container");
+    const matchedProduct = document.querySelector(".end-screen-product");
+    const buttons        = document.getElementsByClassName("btn");
+    let interval = null;
+
+    let hasFlippedCard = false;
+    let lockBoard = false;
+    let firstCard, secondCard;
+
+    // Ensure HUD is hidden on initial load (no timer on start screen)
+    document.addEventListener("DOMContentLoaded", () => {
+      container.classList.remove('show-hud');   // <- keep HUD hidden on start
+      preloadImages(["assets/bg1.jpg","assets/endscreen.jpg","assets/1.png","assets/2.png","assets/3.png","assets/4.png","assets/pattern.jpg"]);
+      document.querySelectorAll(".memory-card").forEach(el => cards.push(el));
+      totalPairs = cards.length / 2;
+      shuffle();
+      cards.forEach(card => card.addEventListener("click", flipCard, { passive:true }));
+    });
+
+    function preloadImages(images){ images.forEach(src => { const img = new Image(); img.src = src; }); }
+    function pad2(n){ return n < 10 ? `0${n}` : `${n}`; }
+    function formatTime(s){
+      const m = Math.floor(s/60), r = s % 60;
+      return m > 0 ? `${m}:${r.toString().padStart(2,'0')}` : `${s}s`;
+    }
+
+    function flipCard(){
+      if (lockBoard) return;
+      if (this === firstCard) return;
+      this.classList.add("flip");
+      if (!hasFlippedCard){ hasFlippedCard = true; firstCard = this; return; }
+      secondCard = this; checkForMatch();
+    }
+
+    async function checkForMatch(){
+      const isMatch = firstCard.dataset.framework === secondCard.dataset.framework;
+      if (isMatch){
+        const imgSrc = firstCard.querySelector('.front-face').src;
+        matchedImage.querySelector('img').src = imgSrc;
+        await new Promise(r => setTimeout(r, 300));
+        matchedImage.style.visibility = "visible";
+        await new Promise(r => setTimeout(r, 800));
+        matchedImage.style.visibility = "hidden";
+
+        matchedPairs++;
+        if (matchedPairs === totalPairs){
+          // Game completed — show end screen with TIME
+          cardsBox.style.pointerEvents = "none";
+          cardsBox.style.opacity = "0";
+          container.style.backgroundImage = "url('assets/endscreen.jpg')";
+          matchedProduct.style.display = "block";
+          for (const btn of buttons){ btn.style.display = "block"; }
+
+          const label = matchedProduct.querySelector(".text");
+          const value = matchedProduct.querySelector(".score");
+          label.innerHTML = "YOU FINISHED THE GAME IN";
+          value.textContent = formatTime(seconds);
+
+          clearInterval(interval);
+          container.classList.remove('show-hud'); // hide HUD on end screen
+        }
+        disableCards();
+      } else {
+        unflipCards();
+      }
+    }
+
+    function disableCards(){ firstCard.removeEventListener("click", flipCard); secondCard.removeEventListener("click", flipCard); resetBoard(); }
+    function unflipCards(){
+      lockBoard = true;
+      setTimeout(() => { firstCard.classList.remove("flip"); secondCard.classList.remove("flip"); resetBoard(); }, 700);
+    }
+    function resetBoard(){ [hasFlippedCard, lockBoard] = [false, false]; [firstCard, secondCard] = [null, null]; }
+
+    function startBtn(){
+      container.style.backgroundImage = "url('assets/bg1.jpg')";
+      container.classList.add('started');
+      container.classList.add('show-hud');       // show HUD ONLY now (not on start screen)
+
+      matchedProduct.style.display = "none";
+      for (const btn of buttons){ btn.style.display = "none"; }
+
+      seconds = 0; matchedPairs = 0;
+      timerDisplay.textContent = "00";
+
+      clearInterval(interval);
+      interval = setInterval(() => {
+        seconds++;
+        timerDisplay.textContent = pad2(seconds);
+      }, 1000);
+
+      shuffle();
+    }
+
+    function playAgain(){
+      clearInterval(interval);
+      seconds = 0; matchedPairs = 0;
+      timerDisplay.textContent = "00";
+
+      container.classList.add('started');
+      container.classList.add('show-hud');       // show HUD again during gameplay
+      container.style.backgroundImage = "url('assets/bg1.jpg')";
+      cardsBox.style.opacity = "1"; cardsBox.style.pointerEvents = "auto";
+
+      matchedProduct.style.display = "none";
+      for (const btn of buttons){ btn.style.display = "none"; }
+
+      // reset cards/listeners
+      document.querySelectorAll(".memory-card").forEach(card => { card.classList.remove("flip"); card.replaceWith(card.cloneNode(true)); });
+      cards.length = 0;
+      document.querySelectorAll(".memory-card").forEach(el => { cards.push(el); el.addEventListener("click", flipCard, { passive:true }); });
+      totalPairs = cards.length / 2;
+
+      shuffle();
+      interval = setInterval(() => {
+        seconds++;
+        timerDisplay.textContent = pad2(seconds);
+      }, 1000);
+    }
+
+    function shuffle(){
+      cards.forEach(card => {
+        const randomPos = Math.floor(Math.random() * cards.length);
+        card.style.order = randomPos;
+      });
+    }
+
+    document.getElementById("myBtn").addEventListener("click", () => {
+      window.open("https://www.ebm.com.pk/", "_blank");
+    }, { passive:true });
+  </script>
+</body>
+</html>

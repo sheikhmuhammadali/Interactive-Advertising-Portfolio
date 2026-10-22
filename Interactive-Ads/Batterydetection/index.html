@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="ad.size" content="width=320,height=480">
+  <title>Mountain Dew Ad</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+    }
+
+    .gwd-ad {
+      width: 100vw;
+      height: 100vh;
+      /* Fallback for browsers that don't support dvh */
+      height: 100dvh;
+      position: relative;
+      overflow: hidden;
+      background-color: black;
+    }
+
+    .creative {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      display: none;
+      z-index: 0;
+    }
+    .creative img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+    }
+
+    .overlay-danger {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: url('https://i.postimg.cc/0y71csgY/danger.png') center center no-repeat;
+      background-size: cover;
+      animation: pulseOverlay 1.5s infinite;
+      display: none;
+      z-index: 2;
+    }
+
+    @keyframes pulseOverlay {
+      0% { opacity: 0.2; }
+      50% { opacity: 0.8; }
+      100% { opacity: 0.2; }
+    }
+
+    .battery-gif {
+      position: absolute;
+      top: 23%;
+      left: 50%;
+      transform: translateX(-50%);
+      /* Responsive width using vw so it scales with screen */
+      width: min(110px, 34vw);
+      height: auto;
+      z-index: 3;
+      pointer-events: none;
+      display: none;
+    }
+
+    .floating-diamond {
+      position: absolute;
+      animation: floatScaleDiamond linear infinite;
+    }
+    .diamond1 {
+      top: 52%;
+      left: 8%;
+      width: min(100px, 31vw);
+      animation-duration: 4.2s;
+    }
+    .diamond2 {
+      top: 8%;
+      left: 25%;
+      width: min(70px, 22vw);
+      animation-duration: 3.5s;
+    }
+    .diamond3 {
+      top: 16%;
+      right: 30%;
+      width: min(30px, 9vw);
+      animation-duration: 3.2s;
+    }
+    @keyframes floatScaleDiamond {
+      0% { transform: translateY(0) scale(1.3); }
+      25% { transform: translateY(-10px) scale(1.4); }
+      50% { transform: translateY(-15px) scale(1.5); }
+      75% { transform: translateY(-10px) scale(1.4); }
+      100% { transform: translateY(0) scale(1.3); }
+    }
+
+    .floating-bottle {
+      position: absolute;
+      top: 50%;
+      left: 87%;
+      transform: translateX(-80%) rotate(-15deg);
+      width: min(430px, 112vw);
+      animation: floatBottle 3s ease-in-out infinite;
+    }
+    @keyframes floatBottle {
+      0% { transform: translate(-50%, 0) rotate(-5deg); }
+      50% { transform: translate(-50%, -10px) rotate(-5deg); }
+      100% { transform: translate(-50%, 0) rotate(-5deg); }
+    }
+
+    #batteryText {
+      position: absolute;
+      top: 23%;
+      width: 100%;
+      text-align: center;
+      font-size: clamp(22px, 9vw, 36px);
+      color: white;
+      font-family: 'Anton', sans-serif;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+      z-index: 3;
+    }
+
+    #closeBtn {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      cursor: pointer;
+      font-size: clamp(18px, 5.5vw, 24px);
+      color: white;
+      z-index: 5;
+      /* Larger tap target on mobile */
+      padding: 8px;
+      line-height: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="gwd-ad" id="gwd-ad">
+    <div id="batteryLow" class="creative">
+      <img src="https://i.postimg.cc/x1LVt2rp/low.jpg" alt="Low Battery Creative">
+    </div>
+    <div id="normalAd" class="creative">
+      <img src="https://i.postimg.cc/P51n2jG3/normal.jpg" alt="Normal Creative">
+    </div>
+    <div id="goodAd" class="creative">
+      <img src="https://i.postimg.cc/sg5CwrFc/good.jpg" alt="Good Battery Creative">
+    </div>
+
+    <div id="dangerOverlay" class="overlay-danger"></div>
+
+    <!-- Battery GIFs -->
+    <img id="batteryGifLow" src="https://i.postimg.cc/JzjCPLwZ/battery_low.png" class="battery-gif">
+    <img id="batteryGifNormal" src="https://i.postimg.cc/7LD8RWDs/battery_normal.png" class="battery-gif">
+    <img id="batteryGifHigh" src="https://i.postimg.cc/SNBp6KPY/battery_good.png" class="battery-gif">
+
+    <!-- Floating elements -->
+    <img src="https://i.postimg.cc/zGTY0rmP/shard1.png" class="floating-diamond diamond1">
+    <img src="https://i.postimg.cc/mg7W8sxK/shard2.png" class="floating-diamond diamond2">
+    <img src="https://i.postimg.cc/JhmVF2mq/shard3.png" class="floating-diamond diamond3">
+    <img src="https://i.postimg.cc/Mp1JdSky/bottle.png" class="floating-bottle">
+
+    <div id="batteryText"></div>
+    <div id="closeBtn">✖</div>
+  </div>
+
+  <script>
+    function checkBatteryLevel() {
+      var batteryLowDiv = document.getElementById('batteryLow');
+      var normalAdDiv = document.getElementById('normalAd');
+      var goodAdDiv = document.getElementById('goodAd');
+      var dangerOverlay = document.getElementById('dangerOverlay');
+      var batteryText = document.getElementById('batteryText');
+
+      var gifLow = document.getElementById('batteryGifLow');
+      var gifNormal = document.getElementById('batteryGifNormal');
+      var gifHigh = document.getElementById('batteryGifHigh');
+
+      if ('getBattery' in navigator) {
+        navigator.getBattery().then(function(battery) {
+          updateBatteryState(battery.level * 100);
+
+          battery.addEventListener('levelchange', function() {
+            updateBatteryState(battery.level * 100);
+          });
+
+          setInterval(function() {
+            updateBatteryState(battery.level * 100);
+          }, 3000);
+        });
+      } else {
+        showNormalAd();
+      }
+
+      function updateBatteryState(level) {
+        console.log('Battery Level:', level + '%');
+        batteryLowDiv.style.display = 'none';
+        normalAdDiv.style.display = 'none';
+        goodAdDiv.style.display = 'none';
+
+        dangerOverlay.style.display = 'none';
+        gifLow.style.display = 'none';
+        gifNormal.style.display = 'none';
+        gifHigh.style.display = 'none';
+
+        batteryText.innerText = Math.round(level) + '%';
+
+        if (level >= 0 && level <= 30) {
+          batteryLowDiv.style.display = 'block';
+          dangerOverlay.style.display = 'block';
+          gifLow.style.display = 'block';
+        } else if (level >= 31 && level <= 80) {
+          normalAdDiv.style.display = 'block';
+          gifNormal.style.display = 'block';
+        } else if (level >= 81) {
+          goodAdDiv.style.display = 'block';
+          gifHigh.style.display = 'block';
+        }
+      }
+
+      function showNormalAd() {
+        batteryLowDiv.style.display = 'none';
+        goodAdDiv.style.display = 'none';
+        normalAdDiv.style.display = 'block';
+        dangerOverlay.style.display = 'none';
+        gifLow.style.display = 'none';
+        gifNormal.style.display = 'block';
+        gifHigh.style.display = 'none';
+        batteryText.innerText = '--%';
+      }
+    }
+
+    function closeAd() {
+      document.getElementById('gwd-ad').style.display = 'none';
+    }
+
+    window.addEventListener('load', checkBatteryLevel);
+    document.getElementById('closeBtn').addEventListener('click', closeAd);
+  </script>
+</body>
+</html>

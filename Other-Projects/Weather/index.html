@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=320, user-scalable=0" id="viewport" />
+    <meta name="ad.size" content="width=320,height=480">
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <title>Foodpanda Interstitial Ad</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            margin: auto;
+            width: 320px;
+            height: 480px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            text-align: center;
+            background-size: contain;
+            background-position: top center;
+            background-repeat: no-repeat;
+            overflow: hidden;
+            position: relative;
+        }
+        .ad-container {
+            width: 320px;
+            height: 480px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+        }
+        .weather-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 22px;
+            font-weight: bold;
+            color: black;
+            margin-top: 10px;
+        }
+        .temperature {
+            font-size: 24px;
+            font-weight: bold;
+            color: #D70F65;
+        }
+        .weather-text {
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 5px;
+            padding: 0 10px;
+            color: black;
+        }
+        #foodImage {
+            width: 230px;
+            margin-top: 5px;
+        }
+        .cta-button {
+            width: 160px;
+            cursor: pointer;
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ad-container">
+        <p class="weather-info">
+            <span id="temperature" class="temperature">Fetching...</span>
+            <span id="city">Location...</span>
+        </p>
+        <p id="weatherText" class="weather-text">Checking weather...</p>
+        <img id="foodImage" src="">
+        <br>
+        <a id="ctaLink" href="#" target="_blank">
+            <img id="ctaButton" class="cta-button" src="">
+        </a>
+    </div>
+
+    <script>
+        const apiKey = "9888f784d77989b67af2d27aff9bacc9";
+    
+        const backgrounds = ["cold-bg.jpg", "moderate-bg.jpg", "hot-bg.jpg"];
+        const foodImages = ["soup.png", "pizza.png", "ice-cream.png"];
+        const ctaImages = ["order-now.png", "order-pizza.png", "order-cool.png"];
+        const ctaLinks = [
+            "https://www.foodpanda.pk/cold",
+            "https://www.foodpanda.pk/moderate",
+            "https://www.foodpanda.pk/hot"
+        ];
+    
+        function fetchWeather(lat, lon) {
+            fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`)
+                .then(response => response.json())
+                .then(data => {
+                    const temp = data.main.temp;
+                    const city = data.name;
+    
+                    document.getElementById("city").innerText = city;
+                    document.getElementById("temperature").innerText = `${Math.round(temp)}°C`;
+    
+                    let index = temp <= 22 ? 0 : temp <= 30 ? 1 : 2;
+    
+                    document.body.style.backgroundImage = `url('${backgrounds[index]}')`;
+                    document.getElementById("foodImage").src = foodImages[index];
+                    document.getElementById("ctaButton").src = ctaImages[index];
+                    document.getElementById("ctaLink").href = ctaLinks[index];
+    
+                    document.getElementById("weatherText").innerText = temp <= 22
+                        ? "Feeling cold? Order hot Soup now!"
+                        : temp <= 30
+                        ? "Perfect weather for a Cheesy Pizza!"
+                        : "Too hot? Cool down with Ice Cream!";
+                })
+                .catch(() => {
+                    document.getElementById("weatherText").innerText = "Failed to fetch weather data.";
+                });
+        }
+    
+        function getIPLocation() {
+            fetch("https://ipinfo.io/json?token=5f63ceb1407948")
+                .then(response => response.json())
+                .then(data => {
+                    const lat = data.lat;
+                    const lon = data.lon;
+                    fetchWeather(lat, lon);
+                })
+                .catch(() => {
+                    document.getElementById("weatherText").innerText = "Failed to get location.";
+                });
+        }
+    
+        function getLocation() {
+            fetch("https://ipinfo.io/json?token=5f63ceb1407948")
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Full IP Data:", data); // Debugging: Log the response
+
+                    if (!data.loc) {
+                        throw new Error("No location found in IP data");
+                    }
+                
+                    const [lat, lon] = data.loc.split(",");
+                    console.log(`Using IP location: ${lat}, ${lon} (${data.city}, ${data.country})`);
+                    fetchWeather(lat, lon);
+                })
+                .catch(error => {
+                    console.error("IP Location Error:", error);
+                    document.getElementById("weatherText").innerText = "Failed to get location.";
+                });
+        }
+
+    
+        getLocation();
+    </script>
+    
+    
+
+</body>
+</html>

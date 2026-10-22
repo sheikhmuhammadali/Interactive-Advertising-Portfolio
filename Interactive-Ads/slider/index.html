@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="ad.size" content="width=320,height=480">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<title>Slider Ad</title>
+<style>
+  html,body{height:100%;margin:0;background:#000;touch-action:none;-webkit-tap-highlight-color:transparent;font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;}
+  *{box-sizing:border-box}
+
+  .viewport {
+    position: fixed; 
+    inset: 0;
+    display: flex; 
+    justify-content: center;
+    align-items: flex-start;
+    background: #ffffff;
+  }
+  .stage-wrap {
+    position: relative;
+    width: 320px; 
+    height: 480px;
+    transform-origin: center top;
+    overflow: hidden;
+    background: #ffffff;
+  }
+
+  .layer, .final-screen {
+    position:absolute; inset:0; overflow:hidden;
+  }
+
+  .logo {
+    position:absolute; top:10px; left:10px; right:10px;
+    height:44px; display:flex; align-items:center; justify-content:flex-start;
+    pointer-events:none;
+  }
+
+  .logo img{height:100%; width:auto; display:block}
+
+  .img {
+    position:absolute; inset:0;
+    background-size: cover;
+    background-position: center center;
+    will-change: clip-path, transform, opacity;
+  }
+
+  .img-front {
+    clip-path: inset(0 0 0 0);
+  }
+
+  .slider-line {
+    position:absolute; top:0; bottom:0; width:2px; background:#fff; box-shadow:0 0 10px rgba(255,255,255,.8);
+    left: 0;
+  }
+  .handle {
+    position:absolute; top:50%; transform:translate(-50%,-50%);
+    width:36px; height:36px; border-radius:50%;
+    background:#fff; box-shadow:0 3px 10px rgba(0,0,0,.35);
+    display:grid; place-items:center;
+    border:2px solid #111;
+  }
+  .handle:after{
+    content:"⇆"; font-size:16px; color:#111; font-weight:700;
+  }
+
+  .hint {
+    position:absolute; left:0; right:0; bottom:12px;
+    color:#fff; text-align:center; font-size:13px; text-shadow:0 2px 6px rgba(0,0,0,.7);
+    pointer-events:none; opacity:.9;
+  }
+
+  .final-screen {
+    opacity:0; pointer-events:none; transform:scale(1.02);
+    transition: opacity .45s ease, transform .45s ease;
+    background: #000;
+  }
+  .final-screen.show {
+    opacity:1; pointer-events:auto; transform:scale(1);
+  }
+  .final-bg {
+    position:absolute; inset:0;
+    background-size:cover; background-position:center;
+    filter:brightness(.95);
+    transform: scale(1.02);
+  }
+
+  .final-logo {
+    position:absolute; top:10px; left:10px; right:10px; height:44px; display:flex; align-items:center;
+  }
+
+  .final-logo img{height:100%; width:auto; display:block}
+
+  .cta-wrap {
+    position:absolute; left:0; right:0; bottom:14px; display:grid; place-items:center;
+  }
+
+  .cta {
+    display:block;
+    width: 210px; height: 50px;
+    background-size:contain; background-repeat:no-repeat; background-position:center;
+  }
+
+  .tiny-note {
+    position:absolute; right:8px; bottom:8px; color:#fff; opacity:.35; font-size:10px; pointer-events:none;
+  }
+</style>
+</head>
+<body>
+  <div class="viewport">
+    <div class="stage-wrap" id="stage" aria-label="Slider Ad Interstitial">
+
+      <div class="layer" id="sliderLayer">
+        <div class="logo"><img id="logoTop" alt="Brand Logo" /></div>
+        <div class="img img-back" id="imgBack"></div>
+        <div class="img img-front" id="imgFront"></div>
+        <div class="slider-line" id="line"></div>
+        <div class="handle" id="handle" aria-label="Drag to reveal"></div>
+        <div class="hint" id="hint">Slide to reveal</div>
+      </div>
+
+      <div class="final-screen" id="final">
+        <div class="final-bg" id="finalBg"></div>
+        <div class="final-logo"><img id="logoFinal" alt="Brand Logo" /></div>
+        <div class="cta-wrap">
+          <a id="ctaBtn" class="cta" href="#" role="button" aria-label="Learn more"></a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const ASSETS = {
+  logo:  'https://i.postimg.cc/SN45wsDg/logo.png',
+  front: 'https://i.postimg.cc/pXv7gTsx/before.png',
+  back:  'https://i.postimg.cc/tCbfLTB0/Product.png',
+  final: 'https://i.postimg.cc/y6ctQ9X5/anotherproduct.png',
+  cta:   'https://i.postimg.cc/yYK5wdvv/cta.png',
+  clickTag: 'https://www.shanfoods.com/'
+};
+
+const stage    = document.getElementById('stage');
+const sliderLy = document.getElementById('sliderLayer');
+const imgFront = document.getElementById('imgFront');
+const imgBack  = document.getElementById('imgBack');
+const line     = document.getElementById('line');
+const handle   = document.getElementById('handle');
+const hint     = document.getElementById('hint');
+const final    = document.getElementById('final');
+const finalBg  = document.getElementById('finalBg');
+const ctaBtn   = document.getElementById('ctaBtn');
+const logoTop  = document.getElementById('logoTop');
+const logoFinal= document.getElementById('logoFinal');
+
+logoTop.src   = ASSETS.logo;
+logoFinal.src = ASSETS.logo;
+imgFront.style.backgroundImage = `url("${ASSETS.front}")`;
+imgBack .style.backgroundImage = `url("${ASSETS.back}")`;
+finalBg.style.backgroundImage  = `url("${ASSETS.final}")`;
+ctaBtn.style.backgroundImage   = `url("${ASSETS.cta}")`;
+ctaBtn.href = (window.clickTag || ASSETS.clickTag);
+
+(function responsiveScaler(){
+  const DESIGN_W = 320, DESIGN_H = 480, DESIGN_RATIO = DESIGN_W / DESIGN_H;
+
+  function scale() {
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const viewRatio = vw / vh;
+
+    let scale;
+    if (viewRatio > DESIGN_RATIO) {
+      scale = vh / DESIGN_H;
+    } else {
+      scale = vw / DESIGN_W;
+    }
+    stage.style.transform = `scale(${scale})`;
+  }
+  window.addEventListener('resize', scale, {passive:true});
+  window.addEventListener('orientationchange', scale, {passive:true});
+  scale();
+})();
+
+let dragging = false;
+let sliderX  = 0;
+const MIN_X = 0;
+const MAX_X = 320;
+
+function setSlider(x){
+  sliderX = Math.max(MIN_X, Math.min(MAX_X, x));
+  imgFront.style.clipPath = `inset(0 0 0 ${sliderX}px)`;
+  line.style.left = `${sliderX - 1}px`;
+  handle.style.left = `${sliderX}px`;
+  if (sliderX > 6) hint.style.opacity = 0.0;
+  if (sliderX >= MAX_X - 8) showFinal();
+}
+
+function pointerX(e) {
+  const rect = stage.getBoundingClientRect();
+  const scale = new WebKitCSSMatrix(getComputedStyle(stage).transform).a || 1;
+  const clientX = (e.touches && e.touches[0] ? e.touches[0].clientX : e.clientX);
+  return (clientX - rect.left) / scale;
+}
+
+function onDown(e){
+  dragging = true;
+  setSlider(pointerX(e));
+  e.preventDefault();
+}
+function onMove(e){
+  if(!dragging) return;
+  setSlider(pointerX(e));
+  e.preventDefault();
+}
+function onUp(){ dragging = false; }
+
+sliderLy.addEventListener('mousedown', onDown);
+window.addEventListener('mousemove', onMove);
+window.addEventListener('mouseup', onUp);
+
+sliderLy.addEventListener('touchstart', onDown, {passive:false});
+window.addEventListener('touchmove', onMove, {passive:false});
+window.addEventListener('touchend', onUp, {passive:true});
+window.addEventListener('touchcancel', onUp, {passive:true});
+
+setSlider(160);
+
+let completed = false;
+function showFinal(){
+  if (completed) return;
+  completed = true;
+
+  sliderLy.style.transition = 'opacity .35s ease, transform .35s ease';
+  sliderLy.style.opacity = '0';
+  sliderLy.style.transform = 'scale(.99)';
+
+  setTimeout(()=>{
+    final.classList.add('show');
+  }, 200);
+}
+
+sliderLy.addEventListener('dblclick', showFinal);
+
+ctaBtn.addEventListener('click', (e)=>{
+  const url = window.clickTag || ASSETS.clickTag || '#';
+  if (url && url !== '#') {
+    window.open(url, '_blank');
+  }
+  e.preventDefault();
+});
+</script>
+</body>
+</html>
